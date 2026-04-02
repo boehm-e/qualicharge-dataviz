@@ -1,0 +1,95 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { BBox } from "geojson";
+import type SuperclusterType from "supercluster";
+import Supercluster from "supercluster";
+import type { Map as LeafletMap } from "leaflet";
+
+import type {
+  IRVEClusterFeature,
+  IRVEClusterOrPoint,
+  IRVEPointFeature,
+  IRVEPointProperties,
+} from "@/types/irve-runtime";
+
+type ClusterPoint = SuperclusterType.PointFeature<IRVEPointProperties>;
+
+const DEFAULT_BOUNDS: BBox = [-180, -85, 180, 85];
+
+function areBoundsEqual(a: BBox, b: BBox) {
+  return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
+}
+
+function toClusterPoint(point: IRVEPointFeature): ClusterPoint {
+  return {
+    type: "Feature",
+    id: point.id,
+    properties: point.properties,
+    geometry: point.geometry,
+  };
+}
+
+export function useMapClusters(points: IRVEPointFeature[]) {
+  const mapRef = useRef<LeafletMap | null>(null);
+  const [bounds, setBounds] = useState<BBox>(DEFAULT_BOUNDS);
+  const [zoom, setZoom] = useState(6);
+
+  const index = useMemo(() => {
+    const supercluster = new Supercluster<IRVEPointProperties, Record<string, never>>({
+      radius: 60,
+      maxZoom: 17,
+      minPoints: 3,
+    });
+
+    const features = new Array<ClusterPoint>(points.length);
+    for (let i = 0; i < points.length; i += 1) {
+      features[i] = toClusterPoint(points[i]);
+    }
+
+    supercluster.load(features);
+    return supercluster;
+  }, [points]);
+
+  const clusters = useMemo<IRVEClusterOrPoint[]>(() => {
+    return index.getClusters(bounds, zoom) as IRVEClusterOrPoint[];
+  }, [bounds, index, zoom]);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const currentBounds = mapRef.current.getBounds();
+    setBounds([
+      currentBounds.getWest(),
+      currentBounds.getSouth(),
+      currentBounds.getEast(),
+      currentBounds.getNorth(),
+    ]);
+    setZoom(mapRef.current.getZoom());
+  }, [index]);
+
+  const updateView = () => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const nextBounds = map.getBounds();
+    const nextBBox: BBox = [
+      nextBounds.getWest(),
+      nextBounds.getSouth(),
+      nextBounds.getEast(),
+      nextBounds.getNorth(),
+    ];
+    const nextZoom = map.getZoom();
+
+    setBounds((prev) => (areBoundsEqual(prev, nextBBox) ? prev : nextBBox));
+    setZoom((prev) => (prev === nextZoom ? prev : nextZoom));
+  };
+
+  return { clusters, supercluster: index, mapRef, zoom, updateView };
+}
+
+export function isClusterFeature(
+  feature: IRVEClusterOrPoint
+): feature is IRVEClusterFeature {
+  return feature.properties.cluster === true;
+}

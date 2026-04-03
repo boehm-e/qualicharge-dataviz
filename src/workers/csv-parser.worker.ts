@@ -3,10 +3,6 @@
 import type { QualichargeEVSEStatique } from "@/types/irve";
 import type {
   IRVEPointFeature,
-  WorkerChunkMessage,
-  WorkerDoneMessage,
-  WorkerErrorMessage,
-  WorkerLoadMessage,
   WorkerMessage,
 } from "@/types/irve-runtime";
 
@@ -15,7 +11,7 @@ interface PapaParseError {
   code: string;
 }
 
-type CsvRow = Partial<Record<keyof QualichargeEVSEStatique | "consolidated_latitude" | "consolidated_longitude", string>>;
+type CsvRow = Partial<Record<keyof QualichargeEVSEStatique, string>>;
 
 interface PapaParseChunkResult {
   data: CsvRow[];
@@ -38,7 +34,8 @@ interface PapaParseStatic {
 declare const Papa: PapaParseStatic;
 
 const CSV_URL =
-  "https://static.data.gouv.fr/resources/base-nationale-des-irve-infrastructures-de-recharge-pour-vehicules-electriques/20260401-060236/consolidation-etalab-schema-irve-statique-v-2.3.1-20260401.csv";
+  "https://www.data.gouv.fr/api/1/datasets/r/8bb0a6e2-1016-42ba-aaee-f72f55c82e9f";
+// "https://static.data.gouv.fr/resources/base-nationale-des-irve-infrastructures-de-recharge-pour-vehicules-electriques/20260401-060236/consolidation-etalab-schema-irve-statique-v-2.3.1-20260401.csv";
 
 let total = 0;
 let nextId = 1;
@@ -104,7 +101,7 @@ function toRow(row: CsvRow): QualichargeEVSEStatique {
     implantation_station: toRequiredString(row.implantation_station) as QualichargeEVSEStatique["implantation_station"],
     adresse_station: toRequiredString(row.adresse_station),
     code_insee_commune: toRequiredString(row.code_insee_commune),
-    coordonneesXY: toRequiredString(row.coordonneesXY) as QualichargeEVSEStatique["coordonneesXY"],
+    coordonneesxy: toRequiredString(row.coordonneesxy) as QualichargeEVSEStatique["coordonneesxy"],
     nbre_pdc: toInteger(row.nbre_pdc, 0),
     id_pdc_itinerance: toRequiredString(row.id_pdc_itinerance),
     id_pdc_local: toNullableString(row.id_pdc_local),
@@ -135,8 +132,10 @@ function toRow(row: CsvRow): QualichargeEVSEStatique {
 }
 
 function createFeature(row: CsvRow): IRVEPointFeature | null {
-  const lat = toNumber(row.consolidated_latitude);
-  const lng = toNumber(row.consolidated_longitude);
+  if (row.coordonneesxy == null) return null;
+  const coords = JSON.parse(row.coordonneesxy as string) as string[];
+  const lat = toNumber(coords[1]);
+  const lng = toNumber(coords[0]);
 
   if (lat === null || lng === null) {
     return null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { MouseEvent, useMemo } from "react";
 import { CircleMarker, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import type SuperclusterType from "supercluster";
@@ -10,6 +10,7 @@ import { Badge } from "@codegouvfr/react-dsfr/Badge";
 import type { IRVEClusterOrPoint, IRVEPointProperties } from "@/types/irve-runtime";
 import { isClusterFeature } from "@/hooks/useMapClusters";
 import { ConditionAcces } from "@/types/irve";
+import { getPowerSeverity } from "@/lib/irve/formatters";
 
 const clusterIconCache = new Map<number, L.DivIcon>();
 
@@ -47,9 +48,15 @@ interface ClusterLayerProps {
   clusters: IRVEClusterOrPoint[];
   supercluster: SuperclusterType<IRVEPointProperties, Record<string, never>>;
   zoom: number;
+  onStationSelect?: (station: IRVEPointProperties["row"]) => void;
 }
 
-export function ClusterLayer({ clusters, supercluster, zoom }: ClusterLayerProps) {
+export function ClusterLayer({
+  clusters,
+  supercluster,
+  zoom,
+  onStationSelect,
+}: ClusterLayerProps) {
   const map = useMap();
 
   const elements = useMemo(() => {
@@ -94,6 +101,12 @@ export function ClusterLayer({ clusters, supercluster, zoom }: ClusterLayerProps
             : p.puissance_nominale >= 50 ? "#f97316"
               : p.puissance_nominale >= 22 ? "#3b82f6"
                 : "#22c55e";
+      const stationTitle = p.nom_station || p.adresse_station;
+
+      const handleCardClick = (event: MouseEvent<HTMLElement>) => {
+        event.preventDefault();
+        onStationSelect?.(p);
+      };
 
       return (
         <CircleMarker
@@ -120,40 +133,36 @@ export function ClusterLayer({ clusters, supercluster, zoom }: ClusterLayerProps
             <Card
               enlargeLink
               linkProps={{
-                href: '#'
+                href: "#station-details",
+                onClick: handleCardClick,
               }}
               size="medium"
-              title={p.adresse_station}
+              title={stationTitle}
               start={<ul className="fr-badges-group">
-                <li><Badge severity="new">{p.puissance_nominale} Kw</Badge></li>
-                <li><Badge >🔌 {p.nbre_pdc} PDC</Badge></li>
+                <li><Badge severity={getPowerSeverity(p.puissance_nominale)}>{p.puissance_nominale} kW</Badge></li>
+                <li><Badge severity="new">{p.nbre_pdc} PDC</Badge></li>
               </ul>}
               desc={<>
                 <div className="irve-popup__grid">
-                  {p.puissance_nominale != null && (
-                    <span className="badge" style={{ background: puissanceColor }}>
-                      ⚡ {p.puissance_nominale} kW
-                    </span>
-                  )}
-                  {p.nbre_pdc > 0 && (
-                    <span className="badge badge--gray">
-                      🔌 {p.nbre_pdc} PDC
-                    </span>
-                  )}
                   {p.condition_acces && (
-                    <span className="badge badge--gray">
-                      {p.condition_acces === ConditionAcces.ACCESS_LIBRE ? "🔓" : "🔒"} {p.condition_acces}
-                    </span>
+                    <Badge as="span" small severity={p.condition_acces === ConditionAcces.ACCESS_LIBRE ? "success" : "info"}>
+                      {p.condition_acces}
+                    </Badge>
+                  )}
+                  {p.horaires && (
+                    <Badge as="span" small noIcon>
+                      {p.horaires}
+                    </Badge>
                   )}
                 </div>
-                {p.nom_operateur && <p className="operateur">Opérateur : {p.nom_operateur}</p>}
+                {p.nom_operateur && <p className="operateur">Operateur : {p.nom_operateur}</p>}
               </>}
             />
           </Popup>
         </CircleMarker>
       );
     });
-  }, [clusters, map, supercluster, zoom]);
+  }, [clusters, map, supercluster, zoom, onStationSelect]);
 
   return <>{elements}</>;
 }

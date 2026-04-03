@@ -1,15 +1,16 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import type { Map as LeafletMap } from "leaflet";
 
 import { useIRVEData } from "@/hooks/useIRVEData";
 import { useMapClusters } from "@/hooks/useMapClusters";
+import type { QualichargeEVSEStatique } from "@/types/irve";
 import { MapEvents } from "./MapEvents";
 import { ClusterLayer } from "./ClusterLayer";
 import { LoadingOverlay } from "./LoadingOverlay";
-import { StatsBar } from "./StatsBar";
+import { StationDetailsPanel } from "./StationDetailsPanel";
 
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
@@ -22,7 +23,8 @@ const INITIAL_ZOOM = 6;
 export default function IRVEMap() {
   const { points, loadState } = useIRVEData();
   const { clusters, supercluster, mapRef, zoom, updateView } = useMapClusters(points);
-  console.log("clusters", clusters[0], supercluster)
+  const [selectedStation, setSelectedStation] = useState<QualichargeEVSEStatique | null>(null);
+
   const handleMapReady = useCallback(
     (map: LeafletMap) => {
       mapRef.current = map;
@@ -33,7 +35,6 @@ export default function IRVEMap() {
 
   return (
     <div className="irve-map-wrapper">
-      <StatsBar loadState={loadState} visibleCount={clusters.length} />
 
       <MapContainer
         center={FRANCE_CENTER}
@@ -59,8 +60,15 @@ export default function IRVEMap() {
           clusters={clusters}
           supercluster={supercluster}
           zoom={zoom}
+          onStationSelect={setSelectedStation}
         />
       </MapContainer>
+
+      <StationDetailsPanel
+        station={selectedStation}
+        isOpen={selectedStation !== null}
+        onClose={() => setSelectedStation(null)}
+      />
 
       <LoadingOverlay loadState={loadState} />
     </div>

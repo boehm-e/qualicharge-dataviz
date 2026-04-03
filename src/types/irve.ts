@@ -74,7 +74,7 @@ export interface QualichargeEVSEStatique {
   /** INSEE code pattern: /^([013-9]\d|2[AB1-9])\d{3}$/ */
   code_insee_commune: string;
   /** "[longitude, latitude]" within French territory */
-  coordonneesXY: FrenchCoordinate;
+  coordonneesxy: FrenchCoordinate;
   /** Positive integer */
   nbre_pdc: number;
 

@@ -18,13 +18,6 @@ const IRVEMap = dynamic(() => import("@/components/map/IRVEMap"), {
 export default function CartePage() {
   return (
     <main className="irve-page">
-      <header className="irve-header">
-        <h1>
-          <span className="irve-header__icon">⚡</span>
-          Bornes de recharge VE
-        </h1>
-        <p>Données ouvertes IRVE — {new Date().getFullYear()}</p>
-      </header>
       <div className="irve-map-container">
         <IRVEMap />
       </div>

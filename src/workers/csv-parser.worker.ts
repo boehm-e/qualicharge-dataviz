@@ -1,4 +1,5 @@
-/// <reference lib="webworker" />
+import { asyncBufferFromUrl, parquetMetadataAsync, parquetReadObjects } from "hyparquet";
+import { compressors } from "hyparquet-compressors";
 
 import type { QualichargeEVSEStatique } from "@/types/irve";
 import type {
@@ -6,36 +7,11 @@ import type {
   WorkerMessage,
 } from "@/types/irve-runtime";
 
-interface PapaParseError {
-  type: string;
-  code: string;
-}
-
 type CsvRow = Partial<Record<keyof QualichargeEVSEStatique, string>>;
 
-interface PapaParseChunkResult {
-  data: CsvRow[];
-  errors: PapaParseError[];
-}
-
-interface PapaParseConfig {
-  header: boolean;
-  skipEmptyLines: boolean;
-  transformHeader: (header: string) => string;
-  chunk: (results: PapaParseChunkResult) => void;
-  complete: () => void;
-  error: (error: Error) => void;
-}
-
-interface PapaParseStatic {
-  parse(input: string, config: PapaParseConfig): void;
-}
-
-declare const Papa: PapaParseStatic;
-
-const CSV_URL =
-  "https://www.data.gouv.fr/api/1/datasets/r/8bb0a6e2-1016-42ba-aaee-f72f55c82e9f";
-// "https://static.data.gouv.fr/resources/base-nationale-des-irve-infrastructures-de-recharge-pour-vehicules-electriques/20260401-060236/consolidation-etalab-schema-irve-statique-v-2.3.1-20260401.csv";
+const PARQUET_URL =
+  "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/8bb0a6e2-1016-42ba-aaee-f72f55c82e9f.parquet";
+const ROW_BATCH_SIZE = 20_000;
 
 let total = 0;
 let nextId = 1;
@@ -62,10 +38,11 @@ function toInteger(value?: string, fallback = 1) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function toBoolean(value?: string) {
+function toBoolean(value?: string | boolean) {
   if (!value) {
     return false;
   }
+  if (value === true) return true;
 
   return ["true", "1", "yes", "oui"].includes(value.trim().toLowerCase());
 }
@@ -101,7 +78,7 @@ function toRow(row: CsvRow): QualichargeEVSEStatique {
     implantation_station: toRequiredString(row.implantation_station) as QualichargeEVSEStatique["implantation_station"],
     adresse_station: toRequiredString(row.adresse_station),
     code_insee_commune: toRequiredString(row.code_insee_commune),
-    coordonneesxy: toRequiredString(row.coordonneesxy) as QualichargeEVSEStatique["coordonneesxy"],
+    coordonneesXY: toRequiredString(row.coordonneesXY) as QualichargeEVSEStatique["coordonneesXY"],
     nbre_pdc: toInteger(row.nbre_pdc, 0),
     id_pdc_itinerance: toRequiredString(row.id_pdc_itinerance),
     id_pdc_local: toNullableString(row.id_pdc_local),
@@ -132,10 +109,11 @@ function toRow(row: CsvRow): QualichargeEVSEStatique {
 }
 
 function createFeature(row: CsvRow): IRVEPointFeature | null {
-  if (row.coordonneesxy == null) return null;
-  const coords = JSON.parse(row.coordonneesxy as string) as string[];
-  const lat = toNumber(coords[1]);
-  const lng = toNumber(coords[0]);
+  console.log("ROW", row)
+  if (row.coordonneesXY == null) return null;
+  const coords = JSON.parse(row.coordonneesXY as string) as [string | number, string | number];
+  const lat = toNumber(String(coords[1]));
+  const lng = toNumber(String(coords[0]));
 
   if (lat === null || lng === null) {
     return null;
@@ -159,62 +137,47 @@ function createFeature(row: CsvRow): IRVEPointFeature | null {
   };
 }
 
-importScripts("https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js");
+async function loadParquet() {
+  postWorkerMessage({ type: "loading", message: "Fetching Parquet metadata..." });
 
-postWorkerMessage({ type: "loading", message: "Fetching CSV..." });
+  const file = await asyncBufferFromUrl({ url: PARQUET_URL });
+  const metadata = await parquetMetadataAsync(file);
+  const rowCount = Number(metadata.num_rows);
 
-fetch(CSV_URL)
-  .then((response) => {
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  postWorkerMessage({ type: "loading", message: "Parsing Parquet..." });
+
+  for (let rowStart = 0; rowStart < rowCount; rowStart += ROW_BATCH_SIZE) {
+    const rowEnd = Math.min(rowStart + ROW_BATCH_SIZE, rowCount);
+    const rows = (await parquetReadObjects({
+      file,
+      compressors,
+      rowStart,
+      rowEnd,
+    })) as CsvRow[];
+
+    const points: IRVEPointFeature[] = [];
+
+    for (const row of rows) {
+      const point = createFeature(row);
+      if (point) {
+        points.push(point);
+      }
     }
 
-    postWorkerMessage({ type: "loading", message: "Parsing CSV..." });
-    return response.text();
-  })
-  .then((csvText) => {
-    Papa.parse(csvText, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (header) => header.trim().toLowerCase(),
-      chunk(results) {
-        if (results.errors.length > 0) {
-          const criticalErrors = results.errors.filter(
-            (error) => error.type === "FieldMismatch" && error.code === "TooFewFields"
-          );
+    if (points.length > 0) {
+      total += points.length;
+      postWorkerMessage({
+        type: "chunk",
+        points,
+        total,
+        batchSize: points.length,
+      });
+    }
+  }
 
-          if (criticalErrors.length > 0) {
-            console.warn(`Chunk had ${criticalErrors.length} rows with too few fields`);
-          }
-        }
+  postWorkerMessage({ type: "done", total });
+}
 
-        const points: IRVEPointFeature[] = [];
-
-        for (const row of results.data) {
-          const point = createFeature(row);
-          if (point) {
-            points.push(point);
-          }
-        }
-
-        if (points.length > 0) {
-          total += points.length;
-          postWorkerMessage({
-            type: "chunk",
-            points,
-            total,
-            batchSize: points.length,
-          });
-        }
-      },
-      complete() {
-        postWorkerMessage({ type: "done", total });
-      },
-      error(error) {
-        postWorkerMessage({ type: "error", message: error.message });
-      },
-    });
-  })
-  .catch((error: Error) => {
-    postWorkerMessage({ type: "error", message: error.message });
-  });
+void loadParquet().catch((error: Error) => {
+  postWorkerMessage({ type: "error", message: error.message });
+});

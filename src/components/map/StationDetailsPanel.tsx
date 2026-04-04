@@ -160,10 +160,10 @@ export function StationDetailsPanel({ station, isOpen, onClose }: StationDetails
                         onClick: () => copy("address_station", station.adresse_station),
                       },
                       {
-                        children: copiedKey === "coordonneesxy" ? "Coordonnees copiees" : "Copier coordonnees",
+                        children: copiedKey === "coordonneesXY" ? "Coordonnees copiees" : "Copier coordonnees",
                         priority: "tertiary",
-                        iconId: copiedKey === "coordonneesxy" ? "fr-icon-check-line" : "fr-icon-clipboard-line",
-                        onClick: () => copy("coordonneesxy", station.coordonneesxy),
+                        iconId: copiedKey === "coordonneesXY" ? "fr-icon-check-line" : "fr-icon-clipboard-line",
+                        onClick: () => copy("coordonneesXY", station.coordonneesXY),
                       },
                     ]}
                   />

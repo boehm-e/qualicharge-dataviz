@@ -25,7 +25,7 @@ export function useIRVEData(): UseIRVEDataResult {
     status: "loading",
     loaded: 0,
     total: 0,
-    message: "Fetching CSV...",
+    message: "Fetching Parquet...",
   });
 
   const workerRef = useRef<Worker | null>(null);
@@ -59,14 +59,14 @@ export function useIRVEData(): UseIRVEDataResult {
         const now = Date.now();
         if (now - lastProgressUpdateRef.current >= PROGRESS_UPDATE_INTERVAL_MS) {
           lastProgressUpdateRef.current = now;
-          setLoadState((prev) => ({
-            ...prev,
-            status: "loading",
-            loaded: message.total,
-            total: message.total,
-            message: "Parsing CSV...",
-          }));
-        }
+            setLoadState((prev) => ({
+              ...prev,
+              status: "loading",
+              loaded: message.total,
+              total: message.total,
+              message: "Parsing Parquet...",
+            }));
+          }
 
         return;
       }

@@ -17,7 +17,7 @@ export function buildSections(station: QualichargeEVSEStatique): DetailSection[]
       title: "Identite",
       items: [
         { label: "Adresse", rawValue: station.adresse_station, copyable: true },
-        { label: "Coordonnees", rawValue: station.coordonneesxy, copyable: true },
+        { label: "Coordonnees", rawValue: station.coordonneesXY, copyable: true },
         { label: "Enseigne", rawValue: station.nom_enseigne },
         { label: "Implantation", rawValue: station.implantation_station },
         { label: "Code INSEE", rawValue: station.code_insee_commune, copyable: true },

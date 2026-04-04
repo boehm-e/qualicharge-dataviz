@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@codegouvfr/react-dsfr": "^1.32.0",
+    "hyparquet": "^1.25.5",
+    "hyparquet-compressors": "^1.1.1",
     "leaflet": "^1.9.4",
     "leaflet-defaulticon-compatibility": "^0.1.2",
     "next": "16.2.2",

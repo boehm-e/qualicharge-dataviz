@@ -7504,7 +7504,7 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
     LZ4_RAW: decompressLz4Raw
   };
 
-  // src/workers/csv-parser.worker.ts
+  // src/workers/dataset-parser.worker.ts
   var PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/8bb0a6e2-1016-42ba-aaee-f72f55c82e9f.parquet";
   var ROW_BATCH_SIZE = 2e4;
   var total = 0;

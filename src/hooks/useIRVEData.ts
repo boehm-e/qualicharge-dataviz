@@ -35,7 +35,7 @@ export function useIRVEData(): UseIRVEDataResult {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const worker = new Worker("/worker/csv-parser.worker.js");
+    const worker = new Worker("/worker/dataset-parser.worker.js");
     workerRef.current = worker;
 
     worker.onmessage = (event: MessageEvent<WorkerMessage>) => {

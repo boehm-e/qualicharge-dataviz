@@ -5,8 +5,8 @@ import { build } from "esbuild";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(currentDir, "..");
-const entryPoint = resolve(projectRoot, "src/workers/csv-parser.worker.ts");
-const outputFile = resolve(projectRoot, "public/worker/csv-parser.worker.js");
+const entryPoint = resolve(projectRoot, "src/workers/dataset-parser.worker.ts");
+const outputFile = resolve(projectRoot, "public/worker/dataset-parser.worker.js");
 
 await mkdir(dirname(outputFile), { recursive: true });
 

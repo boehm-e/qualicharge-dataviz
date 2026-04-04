@@ -20,6 +20,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "files": ["./csv-parser.worker.ts", "../types/irve-runtime.ts", "../types/irve.ts"],
+  "files": ["./dataset-parser.worker.ts", "../types/irve-runtime.ts", "../types/irve.ts"],
   "exclude": []
 }

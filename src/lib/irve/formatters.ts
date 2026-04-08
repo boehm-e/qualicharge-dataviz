@@ -5,7 +5,7 @@ import {
   type QualichargeEVSEStatique,
 } from "@/types/irve";
 
-export function formatNullable(value: string | number | null | undefined, fallback = "Non renseigne") {
+export function formatNullable(value: string | number | null | undefined, fallback = "Non renseigné") {
   if (value == null || value === "") {
     return fallback;
   }
@@ -15,7 +15,7 @@ export function formatNullable(value: string | number | null | undefined, fallba
 
 export function formatBoolean(value: boolean | null | undefined, yes = "Oui", no = "Non") {
   if (value == null) {
-    return "Non renseigne";
+    return "Non renseigné";
   }
 
   return value ? yes : no;
@@ -23,7 +23,7 @@ export function formatBoolean(value: boolean | null | undefined, yes = "Oui", no
 
 export function formatDate(value: string | null | undefined) {
   if (!value) {
-    return "Non renseignee";
+    return "Non renseignée";
   }
 
   const date = new Date(value);
@@ -48,13 +48,13 @@ export function getAccessSeverity(condition: ConditionAcces) {
 export function getPmrLabel(value: AccessibilitePMR) {
   switch (value) {
     case AccessibilitePMR.RESERVE_PMR:
-      return "Place reservee PMR";
+      return "Place reservée PMR";
     case AccessibilitePMR.NON_RESERVE:
-      return "Accessible PMR";
+      return "Place accessible PMR";
     case AccessibilitePMR.NON_ACCESSIBLE:
-      return "Non accessible PMR";
+      return "Place non accessible PMR";
     default:
-      return "Accessibilite PMR inconnue";
+      return "Accessibilité PMR inconnue";
   }
 }
 
@@ -65,11 +65,11 @@ export function getStationTypeLabel(value: ImplantationStation) {
     case ImplantationStation.PARKING_PUBLIC:
       return "Parking public";
     case ImplantationStation.PARKING_PRIVE_USAGE_PUBLIC:
-      return "Parking prive a usage public";
+      return "Parking privé à usage public";
     case ImplantationStation.PARKING_PRIVE_CLIENTELE:
-      return "Parking prive clientele";
+      return "Parking privé réservé à la clientèle";
     case ImplantationStation.STATION_RECHARGE_RAPIDE:
-      return "Station de recharge rapide";
+      return "Station dédiée à la recharge rapide";
   }
 }
 

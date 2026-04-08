@@ -8,7 +8,7 @@ export function ScheduleTable({ horaires }: { horaires: string }) {
   const rows = parseHoraires(horaires);
 
   if (!rows) {
-    return <p className="irve-sidepanel__empty">Horaires non renseignes.</p>;
+    return <p className="irve-sidepanel__empty">Horaires non renseignés.</p>;
   }
 
   return (

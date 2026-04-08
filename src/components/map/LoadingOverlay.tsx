@@ -1,5 +1,10 @@
 "use client";
 
+import Image from "next/image";
+import { Alert } from "@codegouvfr/react-dsfr/Alert";
+import { Badge } from "@codegouvfr/react-dsfr/Badge";
+import { Card } from "@codegouvfr/react-dsfr/Card";
+
 import type { LoadState } from "@/types/irve-runtime";
 
 export interface LoadingOverlayProps {
@@ -17,27 +22,43 @@ export function LoadingOverlay({ loadState }: LoadingOverlayProps) {
   return (
     <div className="irve-loading-overlay">
       {loadState.status === "error" ? (
-        <div className="irve-loading-overlay__error">
-          ⚠️ Erreur de chargement : {loadState.error}
-        </div>
+        <Alert
+          severity="error"
+          small
+          title="Erreur de chargement"
+          description={loadState.error || "Une erreur est survenue pendant le chargement des bornes."}
+        />
       ) : (
-        <div className="irve-loading-overlay__card">
-          <div className="irve-loading-overlay__spinner" />
-          <p>{loadState.message || "Chargement des bornes IRVE…"}</p>
-          {loadState.loaded > 0 && (
-            <p className="irve-loading-overlay__count">
-              {loadState.loaded.toLocaleString("fr-FR")} stations chargées
-            </p>
-          )}
-          {pct !== null && (
-            <div className="irve-loading-overlay__bar">
-              <div
-                className="irve-loading-overlay__fill"
-                style={{ width: `${pct}%` }}
+        <Card
+          title="Chargement des bornes"
+          titleAs="h3"
+          size="small"
+          border
+          desc={
+            <div className="irve-loading-overlay__content">
+              <Image
+                className="irve-loading-overlay__image"
+                src="/images/loading.gif"
+                alt=""
+                aria-hidden="true"
+                unoptimized
+                width={56}
+                height={56}
               />
+              <p className="irve-loading-overlay__message">
+                {loadState.message || "Chargement des bornes IRVE…"}
+              </p>
+              <div className="irve-loading-overlay__meta">
+                {loadState.loaded > 0 ? (
+                  <Badge severity="info">
+                    {loadState.loaded} stations chargées
+                  </Badge>
+                ) : null}
+                {pct !== null ? <Badge severity="new">{pct}%</Badge> : null}
+              </div>
             </div>
-          )}
-        </div>
+          }
+        />
       )}
     </div>
   );

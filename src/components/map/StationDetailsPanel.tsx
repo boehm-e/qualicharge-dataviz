@@ -9,6 +9,7 @@ import { Tag } from "@codegouvfr/react-dsfr/Tag";
 import { CopyableValue } from "@/components/irve/CopyableValue";
 import { ScheduleTable } from "@/components/irve/ScheduleTable";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { usePanoramaPicture } from "@/hooks/usePanoramaPicture";
 import {
   formatBoolean,
   formatDate,
@@ -74,7 +75,7 @@ function resolveDisplayValue(item: DetailItem): string {
 
 export function StationDetailsPanel({ station, isOpen, onClose }: StationDetailsPanelProps) {
   const { copiedKey, copy, reset } = useCopyToClipboard();
-
+  const panoramaPicture = usePanoramaPicture(station?.coordonneesXY);
   const connectorTags = useMemo(() => (station ? getConnectorTags(station) : []), [station]);
   const paymentTags = useMemo(() => (station ? getPaymentTags(station) : []), [station]);
   const sections = useMemo(() => (station ? buildSections(station) : []), [station]);
@@ -87,6 +88,9 @@ export function StationDetailsPanel({ station, isOpen, onClose }: StationDetails
   const panelSubtitle = station
     ? station.adresse_station
     : "Cliquez sur une fiche depuis la carte pour afficher les détails complets de la station.";
+  const panoramaHref = panoramaPicture
+    ? `https://api.panoramax.xyz/?focus=pic/${panoramaPicture.lat}/${panoramaPicture.lon}&pic=${panoramaPicture.id}`
+    : null;
 
   return (
     <MapSidePanel
@@ -98,6 +102,8 @@ export function StationDetailsPanel({ station, isOpen, onClose }: StationDetails
       subtitle={panelSubtitle}
       labelledById="irve-sidepanel-title"
       withBackdrop={false}
+      headerPicture={panoramaPicture?.imageUrl}
+      headerPictureHref={panoramaHref}
     >
       {station ? (
         <>
@@ -105,6 +111,8 @@ export function StationDetailsPanel({ station, isOpen, onClose }: StationDetails
             title="Essentiel"
             desc={
               <div className="irve-sidepanel__hero">
+
+
                 <ul className="fr-badges-group">
                   <li>
                     <Badge severity={getPowerSeverity(station.puissance_nominale)}>

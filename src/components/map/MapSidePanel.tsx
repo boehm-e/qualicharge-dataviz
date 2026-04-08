@@ -15,7 +15,8 @@ interface MapSidePanelProps {
   contentClassName?: string;
   bodyClassName?: string;
   labelledById?: string;
-  withBackdrop?: boolean;
+  headerPicture?: string | null;
+  headerPictureHref?: string | null;
 }
 
 export function MapSidePanel({
@@ -30,40 +31,78 @@ export function MapSidePanel({
   contentClassName = "",
   bodyClassName = "",
   labelledById,
-  withBackdrop = false,
+  headerPicture,
+  headerPictureHref,
 }: MapSidePanelProps) {
   const titleId = labelledById ?? `${id}-title`;
 
   return (
     <aside
       id={id}
-      className={`irve-sidepanel${isOpen ? " is-open" : ""}${className ? ` ${className}` : ""}`}
+      className={`absolute inset-0 z-[1200] pointer-events-none ${className ? ` ${className}` : ""}`}
       aria-hidden={!isOpen}
     >
-      {withBackdrop ? <div className="irve-sidepanel__backdrop" onClick={onClose} /> : null}
-
       <div
-        className={`irve-sidepanel__content${contentClassName ? ` ${contentClassName}` : ""}`}
+        className={`absolute top-0 left-0 bottom-0 w-[min(32rem,100%)] bg-white text-slate-800 shadow-[18px_0_44px_rgba(15,23,42,0.24)] flex flex-col overflow-hidden pointer-events-auto transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isOpen ? "translate-x-0" : "-translate-x-full"}${contentClassName ? ` ${contentClassName}` : ""}`}
         role="dialog"
         aria-modal="false"
         aria-labelledby={titleId}
       >
-        <div className="irve-sidepanel__header">
-          <div className="irve-sidepanel__header-copy">
-            {eyebrow ? <p className="irve-sidepanel__eyebrow">{eyebrow}</p> : null}
-            <h2 id={titleId}>{title}</h2>
-            {subtitle ? <p className="irve-sidepanel__subtitle">{subtitle}</p> : null}
+        <div className="flex flex-col gap-2 p-3">
+          <div className="flex items-center gap-3">
+            {headerPicture ? (
+              <div className="relative shrink-0 self-center">
+                <img
+                  src={headerPicture}
+                  alt={`Photographie de ${title}`}
+                  className="h-24 w-24 rounded-lg object-cover"
+                />
+                {headerPictureHref ? (
+                  <div className="absolute inset-0 rounded-lg [&:hover>a]:flex [&:focus-within>a]:flex">
+                    <a
+                      href={headerPictureHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Ouvrir la vue Panoramax de ${title}`}
+                      className="flex gap-0.5 px-0.5 fr-link--no-icon absolute right-2 bottom-2 hidden h-8  items-center justify-center rounded-full !bg-white !bg-image-none text-black no-underline shadow-sm after:hidden hover:!bg-white hover:!bg-image-none active:!bg-white active:!bg-image-none focus:!bg-white focus:!bg-image-none focus:flex focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      <i className="fr-icon-eye-line" aria-hidden="true" />
+                      voir
+                    </a>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            <div className="min-w-0 flex-1">
+              {eyebrow ? (
+                <p className="text-[0.65rem] m-0! font-bold tracking-widest uppercase text-blue-600">
+                  {eyebrow}
+                </p>
+              ) : null}
+              <h2
+                id={titleId}
+                className="m-0! text-[1rem]! leading-tight text-slate-900"
+              >
+                {title}
+              </h2>
+              {subtitle ? (
+                <p className="m-0! text-[0.8rem]! leading-snug text-slate-600">
+                  {subtitle}
+                </p>
+              ) : null}
+            </div>
+            <Button
+              priority="tertiary"
+              iconId="fr-icon-close-line"
+              title="Fermer le panneau"
+              onClick={onClose}
+            />
           </div>
-
-          <Button
-            priority="tertiary"
-            iconId="fr-icon-close-line"
-            title="Fermer le panneau"
-            onClick={onClose}
-          />
         </div>
 
-        <div className={`irve-sidepanel__body${bodyClassName ? ` ${bodyClassName}` : ""}`}>
+        <div
+          className={`flex flex-col gap-4 overflow-y-auto p-4${bodyClassName ? ` ${bodyClassName}` : ""}`}
+        >
           {children}
         </div>
       </div>

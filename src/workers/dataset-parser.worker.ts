@@ -109,7 +109,6 @@ function toRow(row: CsvRow): QualichargeEVSEStatique {
 }
 
 function createFeature(row: CsvRow): IRVEPointFeature | null {
-  console.log("ROW", row)
   if (row.coordonneesXY == null) return null;
   const coords = JSON.parse(row.coordonneesXY as string) as [string | number, string | number];
   const lat = toNumber(String(coords[1]));

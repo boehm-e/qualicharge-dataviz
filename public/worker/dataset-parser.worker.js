@@ -7591,7 +7591,6 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
     };
   }
   function createFeature(row) {
-    console.log("ROW", row);
     if (row.coordonneesXY == null) return null;
     const coords = JSON.parse(row.coordonneesXY);
     const lat = toNumber(String(coords[1]));

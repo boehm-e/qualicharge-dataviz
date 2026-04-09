@@ -1,70 +1,34 @@
-//import { ClientComponent } from "#/ui/ClientComponent";
-import { Alert } from "@codegouvfr/react-dsfr/Alert";
-import { Tabs } from "@codegouvfr/react-dsfr/Tabs";
-import { Summary } from "@codegouvfr/react-dsfr/Summary";
-import { fr } from "@codegouvfr/react-dsfr";
-import { StartDsfrOnHydration } from "@codegouvfr/react-dsfr/next-app-router";
-// import { ClientComponent } from "../ui/ClientComponent";
+"use client";
 
-export default function Page() {
+import dynamic from "next/dynamic";
+import Image from "next/image";
 
-    return (
-        <>
-            <StartDsfrOnHydration />
-            <a href="https://github.com/garronej/react-dsfr-next-appdir-demo" target="_blank" rel="noreferrer">Source code of this Next.js App Router demo setup</a>
-            <br/>
-            <br/>
-            <Summary
-                links={[
-                    {
-                        linkProps: {
-                            href: '#'
-                        },
-                        text: 'Titre de l’ancre'
-                    },
-                    {
-                        linkProps: {
-                            href: '#'
-                        },
-                        text: 'Titre de l’ancre'
-                    },
-                    {
-                        linkProps: {
-                            href: '#'
-                        },
-                        text: 'Titre de l’ancre'
-                    }
-                ]}
-            />
-            <Alert
-                className={fr.cx("fr-mt-7v")}
-                closable
-                description="Everything went well"
-                severity="success"
-                title="Message successfully sent"
-            />
-            <Tabs
-                className={fr.cx("fr-mt-7v")}
-                label="Name of the tabs system"
-                tabs={[
-                    {
-                        content: <p>Content of tab1</p>,
-                        iconId: 'fr-icon-add-line',
-                        label: 'Tab 1'
-                    },
-                    {
-                        content: <p>Content of tab2</p>,
-                        iconId: 'fr-icon-ball-pen-fill',
-                        label: 'Tab 2'
-                    },
-                    {
-                        content: <p>Content of tab3</p>,
-                        label: 'Tab 3'
-                    }
-                ]}
-            />
-            {/* <ClientComponent /> */}
-        </>
-    );
+import { withBasePath } from "@/lib/base-path";
 
+const IRVEMap = dynamic(() => import("@/components/map/IRVEMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="irve-map-skeleton">
+      <Image
+        className="irve-map-skeleton__image"
+        src={withBasePath("/images/loading.gif")}
+        alt=""
+        aria-hidden="true"
+        unoptimized
+        width={40}
+        height={40}
+      />
+      <p>Initialisation de la carte…</p>
+    </div>
+  ),
+});
+
+export default function CartePage() {
+  return (
+    <main className="irve-page">
+      <div className="irve-map-container">
+        <IRVEMap />
+      </div>
+    </main>
+  );
 }

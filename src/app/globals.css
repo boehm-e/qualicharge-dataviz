@@ -330,17 +330,36 @@ body {
   animation: irve-point-enter 0.18s ease-out;
 }
 
+.irve-point-marker.is-selected {
+  z-index: 1000 !important;
+}
+
+.irve-point-card.is-selected {
+  transform: translateY(-4px) scale(1.08);
+}
+
+.irve-point-card.is-selected::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 24px;
+  border: 3px solid #000091;
+  pointer-events: none;
+}
+
+
+.irve-point-card.is-selected .irve-point-card__tip {
+  background: #000091;
+}
+
 .irve-point-card {
   position: relative;
-  width: 84px;
+  min-width: 60px;
+  width: fit-content;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  border-radius: 20px;
-  background: #ffffff;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.2);
-  overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  overflow: visible;
 }
 
 .irve-point-card__power {
@@ -354,6 +373,8 @@ body {
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
+  border-radius: 20px 20px 0 0;
+  z-index: 2;
 }
 
 .irve-point-card__meta {
@@ -367,35 +388,26 @@ body {
   font-weight: 700;
   line-height: 1;
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 0 0 20px 20px;
+  z-index: 2;
+  box-shadow: 0 10px 24px #0f172a33;
 }
 
 .irve-point-card__tip {
   position: absolute;
   left: 50%;
-  bottom: -10px;
+  bottom: -8px;
+  z-index: 1;
   width: 18px;
   height: 18px;
   background: #ffffff;
-  border-right: 1px solid rgba(148, 163, 184, 0.35);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
   transform: translateX(-50%) rotate(45deg);
 }
 
 /* ─── Popups ───────────────────────────────────────────── */
-.leaflet-popup-content-wrapper {
-  border-radius: 10px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
-  padding: 0 !important;
-  overflow: hidden;
-}
-
 .leaflet-control-zoom-in,
 .leaflet-control-zoom-out {
   background: white;
-}
-
-.leaflet-popup-content {
-  margin: 0 !important;
 }
 
 .irve-popup {

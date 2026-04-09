@@ -1,17 +1,14 @@
 "use client";
 
-import { MouseEvent, useMemo } from "react";
+import { useMemo } from "react";
 import { DivIcon } from "leaflet";
-import { Marker, Popup, useMap } from "react-leaflet";
+import { Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import type SuperclusterType from "supercluster";
-import { Card } from "@codegouvfr/react-dsfr/Card";
-import { Badge } from "@codegouvfr/react-dsfr/Badge";
 
 import type { IRVEClusterOrPoint, IRVEPointProperties } from "@/types/irve-runtime";
 import { isClusterFeature } from "@/hooks/useMapClusters";
-import { ConditionAcces } from "@/types/irve";
-import { getPowerSeverity, getStationDynamicSummary } from "@/lib/irve/formatters";
+import { getStationDynamicSummary } from "@/lib/irve/formatters";
 
 const clusterIconCache = new Map<number, L.DivIcon>();
 const pointIconCache = new Map<string, DivIcon>();
@@ -53,17 +50,18 @@ function getPointPowerLabel(power: number | null | undefined) {
 
 function getPointPlugsLabel(available: number, total: number | null | undefined) {
   if (!total) return "-/- plugs";
-  return `${available}/${total} plugs`;
+  return `${available}/${total} 🔌`;
 }
 
 function getPointIcon(
   power: number | null | undefined,
   plugsLabel: string,
   color: string,
+  isSelected: boolean,
   debug?: string
 ): DivIcon {
   const powerLabel = getPointPowerLabel(power);
-  const cacheKey = `${powerLabel}|${plugsLabel}|${color}`;
+  const cacheKey = `${powerLabel}|${plugsLabel}|${color}|${isSelected ? "selected" : "default"}`;
   const cached = pointIconCache.get(cacheKey);
 
   if (cached) {
@@ -71,15 +69,15 @@ function getPointIcon(
   }
 
   const icon = L.divIcon({
-    html: `<div class="irve-point-card">
+    html: `<div class="irve-point-card${isSelected ? " is-selected" : ""}">
       <div class="irve-point-card__power" style="background:${color}">
         ${powerLabel}
       </div>
       <div class="irve-point-card__meta">
         ${plugsLabel}
       </div>
+      ${debug ? `<div>${debug}</div>`:``}
       <div class="irve-point-card__tip"></div>
-      <div>${debug}</div>
     </div>`,
     className: "",
     iconSize: [84, 56],
@@ -95,6 +93,7 @@ interface ClusterLayerProps {
   clusters: IRVEClusterOrPoint[];
   supercluster: SuperclusterType<IRVEPointProperties, Record<string, never>>;
   zoom: number;
+  selectedStationId?: string | null;
   onStationSelect?: (station: IRVEPointProperties["row"]) => void;
 }
 
@@ -102,6 +101,7 @@ export function ClusterLayer({
   clusters,
   supercluster,
   zoom,
+  selectedStationId,
   onStationSelect,
 }: ClusterLayerProps) {
   const map = useMap();
@@ -142,31 +142,36 @@ export function ClusterLayer({
       }
 
       const p = feature.properties.row;
+      const isSelected = p.id_station_itinerance === selectedStationId;
       const dynamicSummary = getStationDynamicSummary(p);
       const puissanceColor =
-        !p.max_power ? "#6b7280"
-          : p.max_power >= 150 ? "#ef4444"
-            : p.max_power >= 50 ? "#f97316"
-              : p.max_power >= 22 ? "#3b82f6"
+        !p.summary.max_power ? "#6b7280"
+          : p.summary.max_power >= 150 ? "#ef4444"
+            : p.summary.max_power >= 50 ? "#f97316"
+              : p.summary.max_power >= 22 ? "#3b82f6"
                 : "#22c55e";
-      const stationTitle = p.nom_station || p.adresse_station;
-
-      const handleCardClick = (event: MouseEvent<HTMLElement>) => {
-        event.preventDefault();
-        onStationSelect?.(p);
-      };
-
       return (
         <Marker
           key={`point-${feature.id ?? feature.properties.id}`}
           position={[lat, lng]}
           icon={getPointIcon(
-            p.max_power,
-            getPointPlugsLabel(Math.max(dynamicSummary.enServiceCount, dynamicSummary.libreCount), p.nbre_pdc),
+            p.summary.max_power,
+            getPointPlugsLabel(dynamicSummary.availableCount, p.nbre_pdc),
             puissanceColor,
-            `${getPointPlugsLabel(Math.max(dynamicSummary.enServiceCount, dynamicSummary.libreCount), p.nbre_pdc)} | ${p.id_station_itinerance}`
+            isSelected,
+            // `${getPointPlugsLabel(dynamicSummary.availableCount, p.nbre_pdc)} | ${p.id_station_itinerance}`
           )}
+          zIndexOffset={isSelected ? 2000 : 0}
           eventHandlers={{
+            click: () => {
+              const panelWidth = window.innerWidth >= 768 ? Math.min(608, window.innerWidth) : 0;
+              const offsetX = panelWidth > 0 ? panelWidth / 2 : 0;
+              const targetPoint = map.project([lat, lng], Math.max(map.getZoom(), 14)).subtract([offsetX, 0]);
+              const targetLatLng = map.unproject(targetPoint, Math.max(map.getZoom(), 14));
+
+              map.setView(targetLatLng, Math.max(map.getZoom(), 14), { animate: true });
+              onStationSelect?.(p);
+            },
             add: (event) => {
               const element = event.target.getElement();
               if (!element) return;
@@ -174,41 +179,10 @@ export function ClusterLayer({
               element.classList.add("irve-point-marker");
             },
           }}
-        >
-          <Popup maxWidth={350}>
-            <Card
-              enlargeLink
-              linkProps={{
-                href: "#station-details",
-                onClick: handleCardClick,
-              }}
-              size="medium"
-              title={stationTitle}
-              start={<ul className="fr-badges-group">
-                <li><Badge severity={getPowerSeverity(p.max_power)}>{p.max_power} kW</Badge></li>
-                <li><Badge severity="new">{p.nbre_pdc} PDC</Badge></li>
-              </ul>}
-              desc={<>
-                <div className="irve-popup__grid">
-                  {p.condition_acces && (
-                    <Badge as="span" small severity={p.condition_acces === ConditionAcces.ACCESS_LIBRE ? "success" : "info"}>
-                      {p.condition_acces}
-                    </Badge>
-                  )}
-                  {p.horaires && (
-                    <Badge as="span" small noIcon>
-                      {p.horaires}
-                    </Badge>
-                  )}
-                </div>
-                {p.nom_operateur && <p className="operateur">Operateur : {p.nom_operateur}</p>}
-              </>}
-            />
-          </Popup>
-        </Marker>
+        />
       );
     });
-  }, [clusters, map, supercluster, onStationSelect]);
+  }, [clusters, map, selectedStationId, supercluster, onStationSelect]);
 
   return <>{elements}</>;
 }

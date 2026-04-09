@@ -165,6 +165,7 @@ export default function IRVEMap() {
           clusters={clusters}
           supercluster={supercluster}
           zoom={zoom}
+          selectedStationId={visibleSelectedStation?.id_station_itinerance ?? null}
           onStationSelect={setSelectedStation}
         />
       </MapContainer>

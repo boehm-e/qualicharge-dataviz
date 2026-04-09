@@ -54,6 +54,33 @@ export function formatDateTime(value: string | null | undefined) {
   }).format(date);
 }
 
+export function formatRelativeDateTime(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const diffMs = date.getTime() - Date.now();
+  const rtf = new Intl.RelativeTimeFormat("fr-FR", { numeric: "auto" });
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+
+  if (Math.abs(diffMs) < hour) {
+    return rtf.format(Math.round(diffMs / minute), "minute");
+  }
+
+  if (Math.abs(diffMs) < day) {
+    return rtf.format(Math.round(diffMs / hour), "hour");
+  }
+
+  return rtf.format(Math.round(diffMs / day), "day");
+}
+
 export function getPowerSeverity(power: number) {
   if (power >= 150) return "error" as const;
   if (power >= 50) return "warning" as const;
@@ -185,11 +212,11 @@ export function getConnectorAvailabilityTone(value?: EtatPriseEnum | null) {
 
 export function getConnectorTags(station: QualichargeEVSEConsolidated) {
   return [
-    station.has_prise_type_2 && "Type 2",
-    station.has_prise_type_combo_ccs && "Combo CCS",
-    station.has_prise_type_chademo && "CHAdeMO",
-    station.has_prise_type_ef && "Prise EF",
-    station.has_prise_type_autre && "Autre prise",
+    station.summary.has_prise_type_2 && "Type 2",
+    station.summary.has_prise_type_combo_ccs && "Combo CCS",
+    station.summary.has_prise_type_chademo && "CHAdeMO",
+    station.summary.has_prise_type_ef && "Prise EF",
+    station.summary.has_prise_type_autre && "Autre prise",
   ].filter(Boolean) as string[];
 }
 
@@ -219,10 +246,33 @@ export function getStationDynamicSummary(station: QualichargeEVSEConsolidated) {
       : latest;
   }, null);
 
+  const isFunctionalPlug = (plug: QualichargeEVSEPlug) => {
+    if (plug.dynamic?.etat_pdc !== EtatPDCEnum.EN_SERVICE) {
+      return false;
+    }
+
+    const connectorStatuses = [
+      plug.dynamic.etat_prise_type_2,
+      plug.dynamic.etat_prise_type_combo_ccs,
+      plug.dynamic.etat_prise_type_chademo,
+      plug.dynamic.etat_prise_type_ef,
+    ];
+
+    const declaredStatuses = connectorStatuses.filter((status) => status != null);
+    if (declaredStatuses.length === 0) {
+      return true;
+    }
+
+    return declaredStatuses.some((status) => status === EtatPriseEnum.FONCTIONNEL);
+  };
+
   const enServiceCount = plugsWithDynamic.filter((plug) => plug.dynamic?.etat_pdc === EtatPDCEnum.EN_SERVICE).length;
   const libreCount = plugsWithDynamic.filter((plug) => plug.dynamic?.occupation_pdc === OccupationPDCEnum.LIBRE).length;
   const occupiedCount = plugsWithDynamic.filter((plug) => plug.dynamic?.occupation_pdc === OccupationPDCEnum.OCCUPE).length;
   const reservedCount = plugsWithDynamic.filter((plug) => plug.dynamic?.occupation_pdc === OccupationPDCEnum.RESERVE).length;
+  const availableCount = plugsWithDynamic.filter(
+    (plug) => plug.dynamic?.occupation_pdc === OccupationPDCEnum.LIBRE && isFunctionalPlug(plug)
+  ).length;
 
   return {
     plugsWithDynamicCount: plugsWithDynamic.length,
@@ -230,6 +280,7 @@ export function getStationDynamicSummary(station: QualichargeEVSEConsolidated) {
     libreCount,
     occupiedCount,
     reservedCount,
+    availableCount,
     latestDynamic: latestPlug?.dynamic,
   };
 }

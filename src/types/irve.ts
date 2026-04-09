@@ -70,14 +70,14 @@ export type FrenchPhoneNumber = string & { readonly __brand: "FrenchPhoneNumber"
 // Main model
 // ============================================================
 // https://schema.data.gouv.fr/etalab/schema-irve-statique/latest/documentation.html
-export interface QualichargeEVSEStatique {
-  // --- Aménageur (facility owner) ---
+export interface QualichargeEVSEStationBase {
+  // --- Amenageur (facility owner) ---
   nom_amenageur: string;
   /** 9-digit SIREN validated by Luhn algorithm. Example: "853300010" */
   siren_amenageur: Siren;
   contact_amenageur: string; // email
 
-  // --- Opérateur ---
+  // --- Operateur ---
   nom_operateur: string;
   contact_operateur: string; // email
   telephone_operateur: FrenchPhoneNumber;
@@ -96,21 +96,6 @@ export interface QualichargeEVSEStatique {
   coordonneesXY: FrenchCoordinate;
   /** Positive integer */
   nbre_pdc: number;
-
-  // --- Point de charge (PDC) ---
-  /** Pattern: /^FR[A-Z0-9]{3}E[A-Z0-9]{1,29}$/ or "Non concerné".
-   *  AFIREV prefix (first 5 chars) must match id_station_itinerance. */
-  id_pdc_itinerance: string;
-  id_pdc_local?: string | null;
-  /** Range: 1.3 – 4000.0 kW */
-  puissance_nominale: number;
-
-  // --- Connector types ---
-  prise_type_ef: boolean;
-  prise_type_2: boolean;
-  prise_type_combo_ccs: boolean;
-  prise_type_chademo: boolean;
-  prise_type_autre: boolean;
 
   // --- Payment & access ---
   gratuit?: boolean | null;
@@ -144,6 +129,25 @@ export interface QualichargeEVSEStatique {
   cable_t2_attache?: boolean | null;
 }
 
+export interface QualichargeEVSEPlugBase {
+  // --- Point de charge (PDC) ---
+  /** Pattern: /^FR[A-Z0-9]{3}E[A-Z0-9]{1,29}$/ or "Non concerné".
+   *  AFIREV prefix (first 5 chars) must match id_station_itinerance. */
+  id_pdc_itinerance: string;
+  id_pdc_local?: string | null;
+  /** Range: 1.3 – 4000.0 kW */
+  puissance_nominale: number;
+
+  // --- Connector types ---
+  prise_type_ef: boolean;
+  prise_type_2: boolean;
+  prise_type_combo_ccs: boolean;
+  prise_type_chademo: boolean;
+  prise_type_autre: boolean;
+}
+
+export type QualichargeEVSEStatique = QualichargeEVSEStationBase & QualichargeEVSEPlugBase;
+
 export interface QualichargeEVSEDynamic {
   id_pdc_itinerance: string;
   horodatage: string;
@@ -159,23 +163,16 @@ export type QualichargeEVSEPlug = QualichargeEVSEStatique & {
   dynamic?: QualichargeEVSEDynamic;
 };
 
-export interface QualichargeEVSEConsolidated
-  extends Omit<
-    QualichargeEVSEStatique,
-    | "id_pdc_itinerance"
-    | "id_pdc_local"
-    | "puissance_nominale"
-    | "prise_type_ef"
-    | "prise_type_2"
-    | "prise_type_combo_ccs"
-    | "prise_type_chademo"
-    | "prise_type_autre"
-  > {
-  plugs: QualichargeEVSEPlug[];
+export interface QualichargeEVSEStationSummary {
   max_power: number;
   has_prise_type_ef: boolean;
   has_prise_type_2: boolean;
   has_prise_type_combo_ccs: boolean;
   has_prise_type_chademo: boolean;
   has_prise_type_autre: boolean;
+}
+
+export interface QualichargeEVSEConsolidated extends QualichargeEVSEStationBase {
+  plugs: QualichargeEVSEPlug[];
+  summary: QualichargeEVSEStationSummary;
 }

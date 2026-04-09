@@ -94,24 +94,24 @@ export function matchesStationFilters(
 
   if (
     filters.power.length > 0 &&
-    !filters.power.some((filterId) => matchesPower(station.max_power, filterId))
+    !filters.power.some((filterId) => matchesPower(station.summary.max_power, filterId))
   ) {
     return false;
   }
 
-  if (filters.connectors.includes("type2") && !station.has_prise_type_2) {
+  if (filters.connectors.includes("type2") && !station.summary.has_prise_type_2) {
     return false;
   }
 
-  if (filters.connectors.includes("ccs") && !station.has_prise_type_combo_ccs) {
+  if (filters.connectors.includes("ccs") && !station.summary.has_prise_type_combo_ccs) {
     return false;
   }
 
-  if (filters.connectors.includes("chademo") && !station.has_prise_type_chademo) {
+  if (filters.connectors.includes("chademo") && !station.summary.has_prise_type_chademo) {
     return false;
   }
 
-  if (filters.connectors.includes("ef") && !station.has_prise_type_ef) {
+  if (filters.connectors.includes("ef") && !station.summary.has_prise_type_ef) {
     return false;
   }
 

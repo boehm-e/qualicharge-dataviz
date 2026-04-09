@@ -6,6 +6,7 @@ import { Tag } from "@codegouvfr/react-dsfr/Tag";
 import { ScheduleTable } from "@/components/irve/ScheduleTable";
 import {
   formatDateTime,
+  formatRelativeDateTime,
   getAccessSeverity,
   getAvailabilityTone,
   getPmrLabel,
@@ -17,6 +18,7 @@ import type { EssentialTabProps } from "./shared";
 
 export function StationEssentialTab({ station, copiedKey, copy }: EssentialTabProps) {
   const dynamicSummary = getStationDynamicSummary(station);
+  const relativeLastUpdate = formatRelativeDateTime(dynamicSummary.latestDynamic?.horodatage);
 
   return (
     <div className="irve-sidepanel__tab-stack">
@@ -26,8 +28,8 @@ export function StationEssentialTab({ station, copiedKey, copy }: EssentialTabPr
           <div className="irve-sidepanel__hero">
             <ul className="fr-badges-group">
               <li>
-                <Badge severity={getPowerSeverity(station.max_power)}>
-                  {station.max_power} kW max
+                <Badge severity={getPowerSeverity(station.summary.max_power)}>
+                  {station.summary.max_power} kW max
                 </Badge>
               </li>
               <li>
@@ -94,6 +96,9 @@ export function StationEssentialTab({ station, copiedKey, copy }: EssentialTabPr
               <p className={dynamicSummary.latestDynamic?.horodatage ? "irve-sidepanel__value" : "irve-sidepanel__missing"}>
                 {formatDateTime(dynamicSummary.latestDynamic?.horodatage)}
               </p>
+              {relativeLastUpdate ? (
+                <p className="irve-sidepanel__hint">{relativeLastUpdate}</p>
+              ) : null}
             </div>
 
             <div>

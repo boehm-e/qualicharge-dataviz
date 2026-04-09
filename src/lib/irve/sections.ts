@@ -31,7 +31,7 @@ export function buildSections(station: QualichargeEVSEConsolidated): DetailSecti
           label: "Raccordement",
           rawValue: station.raccordement === Raccordement.DIRECT ? "Direct" : "Indirect",
         },
-        { label: "Puissance max", rawValue: `${station.max_power} kW` },
+        { label: "Puissance max", rawValue: `${station.summary.max_power} kW` },
         { label: "Nombre de PDC", rawValue: String(station.nbre_pdc) },
         { label: "Numero PDL", rawValue: station.num_pdl, copyable: true },
         { label: "Cable T2 attache", rawValue: String(station.cable_t2_attache ?? null) },

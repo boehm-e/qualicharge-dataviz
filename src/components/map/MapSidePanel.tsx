@@ -43,7 +43,7 @@ export function MapSidePanel({
       aria-hidden={!isOpen}
     >
       <div
-        className={`absolute top-0 left-0 bottom-0 w-[min(38rem,100%)] bg-white text-slate-800 shadow-[18px_0_44px_rgba(15,23,42,0.24)] flex flex-col overflow-hidden pointer-events-auto transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isOpen ? "translate-x-0" : "-translate-x-full"}${contentClassName ? ` ${contentClassName}` : ""}`}
+        className={`absolute top-0 left-0 bottom-0 w-[min(38rem,100%)] bg-white text-slate-800 flex flex-col overflow-hidden pointer-events-auto transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isOpen ? "translate-x-0" : "-translate-x-full"}${contentClassName ? ` ${contentClassName}` : ""}`}
         role="dialog"
         aria-modal="false"
         aria-labelledby={titleId}
@@ -64,7 +64,7 @@ export function MapSidePanel({
                       target="_blank"
                       rel="noreferrer"
                       aria-label={`Ouvrir la vue Panoramax de ${title}`}
-                      className="flex gap-0.5 px-0.5 fr-link--no-icon absolute right-2 bottom-2 hidden h-8  items-center justify-center rounded-full !bg-white !bg-image-none text-black no-underline shadow-sm after:hidden hover:!bg-white hover:!bg-image-none active:!bg-white active:!bg-image-none focus:!bg-white focus:!bg-image-none focus:flex focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                      className="gap-0.5 px-0.5 fr-link--no-icon absolute right-2 bottom-2 hidden h-8  items-center justify-center rounded-full !bg-white !bg-image-none text-black no-underline after:hidden hover:!bg-white hover:!bg-image-none active:!bg-white active:!bg-image-none focus:!bg-white focus:!bg-image-none focus:flex focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
                       <i className="fr-icon-eye-line" aria-hidden="true" />
                       voir

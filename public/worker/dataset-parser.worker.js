@@ -7705,12 +7705,14 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
       date_maj: firstPlug.date_maj,
       cable_t2_attache: firstPlug.cable_t2_attache,
       plugs,
-      max_power: maxPower,
-      has_prise_type_ef: hasPriseTypeEf,
-      has_prise_type_2: hasPriseType2,
-      has_prise_type_combo_ccs: hasPriseTypeComboCcs,
-      has_prise_type_chademo: hasPriseTypeChademo,
-      has_prise_type_autre: hasPriseTypeAutre
+      summary: {
+        max_power: maxPower,
+        has_prise_type_ef: hasPriseTypeEf,
+        has_prise_type_2: hasPriseType2,
+        has_prise_type_combo_ccs: hasPriseTypeComboCcs,
+        has_prise_type_chademo: hasPriseTypeChademo,
+        has_prise_type_autre: hasPriseTypeAutre
+      }
     };
   }
   async function loadParquet() {

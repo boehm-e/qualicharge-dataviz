@@ -43,7 +43,7 @@ export function MapSidePanel({
       aria-hidden={!isOpen}
     >
       <div
-        className={`absolute top-0 left-0 bottom-0 w-[min(32rem,100%)] bg-white text-slate-800 shadow-[18px_0_44px_rgba(15,23,42,0.24)] flex flex-col overflow-hidden pointer-events-auto transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isOpen ? "translate-x-0" : "-translate-x-full"}${contentClassName ? ` ${contentClassName}` : ""}`}
+        className={`absolute top-0 left-0 bottom-0 w-[min(38rem,100%)] bg-white text-slate-800 shadow-[18px_0_44px_rgba(15,23,42,0.24)] flex flex-col overflow-hidden pointer-events-auto transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isOpen ? "translate-x-0" : "-translate-x-full"}${contentClassName ? ` ${contentClassName}` : ""}`}
         role="dialog"
         aria-modal="false"
         aria-labelledby={titleId}
@@ -101,7 +101,7 @@ export function MapSidePanel({
         </div>
 
         <div
-          className={`flex flex-col gap-4 overflow-y-auto p-4${bodyClassName ? ` ${bodyClassName}` : ""}`}
+          className={`min-h-0 flex flex-col gap-4 overflow-y-auto p-4${bodyClassName ? ` ${bodyClassName}` : ""}`}
         >
           {children}
         </div>

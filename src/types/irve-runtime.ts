@@ -1,6 +1,6 @@
-import type { QualichargeEVSEStatique } from "@/types/irve";
+import type { QualichargeEVSEConsolidated } from "@/types/irve";
 
-export type IRVERow = QualichargeEVSEStatique;
+export type IRVERow = QualichargeEVSEConsolidated;
 
 export type WorkerStatus = "idle" | "loading" | "done" | "error";
 

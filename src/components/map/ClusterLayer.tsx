@@ -1,7 +1,8 @@
 "use client";
 
 import { MouseEvent, useMemo } from "react";
-import { CircleMarker, Marker, Popup, useMap } from "react-leaflet";
+import { DivIcon } from "leaflet";
+import { Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import type SuperclusterType from "supercluster";
 import { Card } from "@codegouvfr/react-dsfr/Card";
@@ -10,9 +11,10 @@ import { Badge } from "@codegouvfr/react-dsfr/Badge";
 import type { IRVEClusterOrPoint, IRVEPointProperties } from "@/types/irve-runtime";
 import { isClusterFeature } from "@/hooks/useMapClusters";
 import { ConditionAcces } from "@/types/irve";
-import { getPowerSeverity } from "@/lib/irve/formatters";
+import { getPowerSeverity, getStationDynamicSummary } from "@/lib/irve/formatters";
 
 const clusterIconCache = new Map<number, L.DivIcon>();
+const pointIconCache = new Map<string, DivIcon>();
 
 function getClusterIcon(count: number): L.DivIcon {
   const size = count < 10 ? 36 : count < 100 ? 44 : count < 1000 ? 52 : 62;
@@ -42,6 +44,51 @@ function getClusterClassName(count: number) {
   if (count < 100) return "irve-cluster-marker irve-cluster-marker--md";
   if (count < 1000) return "irve-cluster-marker irve-cluster-marker--lg";
   return "irve-cluster-marker irve-cluster-marker--xl";
+}
+
+function getPointPowerLabel(power: number | null | undefined) {
+  if (!power) return "-";
+  return `${power} kW`;
+}
+
+function getPointPlugsLabel(available: number, total: number | null | undefined) {
+  if (!total) return "-/- plugs";
+  return `${available}/${total} plugs`;
+}
+
+function getPointIcon(
+  power: number | null | undefined,
+  plugsLabel: string,
+  color: string,
+  debug?: string
+): DivIcon {
+  const powerLabel = getPointPowerLabel(power);
+  const cacheKey = `${powerLabel}|${plugsLabel}|${color}`;
+  const cached = pointIconCache.get(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const icon = L.divIcon({
+    html: `<div class="irve-point-card">
+      <div class="irve-point-card__power" style="background:${color}">
+        ${powerLabel}
+      </div>
+      <div class="irve-point-card__meta">
+        ${plugsLabel}
+      </div>
+      <div class="irve-point-card__tip"></div>
+      <div>${debug}</div>
+    </div>`,
+    className: "",
+    iconSize: [84, 56],
+    iconAnchor: [42, 56],
+    popupAnchor: [0, -50],
+  });
+
+  pointIconCache.set(cacheKey, icon);
+  return icon;
 }
 
 interface ClusterLayerProps {
@@ -95,11 +142,12 @@ export function ClusterLayer({
       }
 
       const p = feature.properties.row;
+      const dynamicSummary = getStationDynamicSummary(p);
       const puissanceColor =
-        !p.puissance_nominale ? "#6b7280"
-          : p.puissance_nominale >= 150 ? "#ef4444"
-            : p.puissance_nominale >= 50 ? "#f97316"
-              : p.puissance_nominale >= 22 ? "#3b82f6"
+        !p.max_power ? "#6b7280"
+          : p.max_power >= 150 ? "#ef4444"
+            : p.max_power >= 50 ? "#f97316"
+              : p.max_power >= 22 ? "#3b82f6"
                 : "#22c55e";
       const stationTitle = p.nom_station || p.adresse_station;
 
@@ -109,17 +157,15 @@ export function ClusterLayer({
       };
 
       return (
-        <CircleMarker
+        <Marker
           key={`point-${feature.id ?? feature.properties.id}`}
-          center={[lat, lng]}
-          radius={zoom > 14 ? 8 : zoom > 12 ? 6 : 5}
-          pathOptions={{
-            fillColor: puissanceColor,
-            color: "#fff",
-            weight: 1.5,
-            opacity: 1,
-            fillOpacity: 0.9,
-          }}
+          position={[lat, lng]}
+          icon={getPointIcon(
+            p.max_power,
+            getPointPlugsLabel(Math.max(dynamicSummary.enServiceCount, dynamicSummary.libreCount), p.nbre_pdc),
+            puissanceColor,
+            `${getPointPlugsLabel(Math.max(dynamicSummary.enServiceCount, dynamicSummary.libreCount), p.nbre_pdc)} | ${p.id_station_itinerance}`
+          )}
           eventHandlers={{
             add: (event) => {
               const element = event.target.getElement();
@@ -139,7 +185,7 @@ export function ClusterLayer({
               size="medium"
               title={stationTitle}
               start={<ul className="fr-badges-group">
-                <li><Badge severity={getPowerSeverity(p.puissance_nominale)}>{p.puissance_nominale} kW</Badge></li>
+                <li><Badge severity={getPowerSeverity(p.max_power)}>{p.max_power} kW</Badge></li>
                 <li><Badge severity="new">{p.nbre_pdc} PDC</Badge></li>
               </ul>}
               desc={<>
@@ -159,10 +205,10 @@ export function ClusterLayer({
               </>}
             />
           </Popup>
-        </CircleMarker>
+        </Marker>
       );
     });
-  }, [clusters, map, supercluster, zoom, onStationSelect]);
+  }, [clusters, map, supercluster, onStationSelect]);
 
   return <>{elements}</>;
 }

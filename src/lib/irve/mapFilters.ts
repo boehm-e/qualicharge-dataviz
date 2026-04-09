@@ -1,4 +1,4 @@
-import { AccessibilitePMR, ConditionAcces, type QualichargeEVSEStatique } from "@/types/irve";
+import { AccessibilitePMR, ConditionAcces, type QualichargeEVSEConsolidated } from "@/types/irve";
 
 export type PowerFilterId = "ultra" | "veryFast" | "fast" | "standard";
 export type AccessFilter = "all" | "free" | "restricted";
@@ -81,7 +81,7 @@ export function getActiveFilterCount(filters: MapFiltersState) {
 }
 
 export function matchesStationFilters(
-  station: QualichargeEVSEStatique,
+  station: QualichargeEVSEConsolidated,
   filters: MapFiltersState
 ) {
   if (filters.access === "free" && station.condition_acces !== ConditionAcces.ACCESS_LIBRE) {
@@ -94,24 +94,24 @@ export function matchesStationFilters(
 
   if (
     filters.power.length > 0 &&
-    !filters.power.some((filterId) => matchesPower(station.puissance_nominale, filterId))
+    !filters.power.some((filterId) => matchesPower(station.max_power, filterId))
   ) {
     return false;
   }
 
-  if (filters.connectors.includes("type2") && !station.prise_type_2) {
+  if (filters.connectors.includes("type2") && !station.has_prise_type_2) {
     return false;
   }
 
-  if (filters.connectors.includes("ccs") && !station.prise_type_combo_ccs) {
+  if (filters.connectors.includes("ccs") && !station.has_prise_type_combo_ccs) {
     return false;
   }
 
-  if (filters.connectors.includes("chademo") && !station.prise_type_chademo) {
+  if (filters.connectors.includes("chademo") && !station.has_prise_type_chademo) {
     return false;
   }
 
-  if (filters.connectors.includes("ef") && !station.prise_type_ef) {
+  if (filters.connectors.includes("ef") && !station.has_prise_type_ef) {
     return false;
   }
 
@@ -142,6 +142,6 @@ export function matchesStationFilters(
   return true;
 }
 
-export function filterStations(stations: QualichargeEVSEStatique[], filters: MapFiltersState) {
+export function filterStations(stations: QualichargeEVSEConsolidated[], filters: MapFiltersState) {
   return stations.filter((station) => matchesStationFilters(station, filters));
 }

@@ -1,8 +1,12 @@
 import {
   AccessibilitePMR,
   ConditionAcces,
+  EtatPDCEnum,
+  EtatPriseEnum,
   ImplantationStation,
-  type QualichargeEVSEStatique,
+  OccupationPDCEnum,
+  type QualichargeEVSEConsolidated,
+  type QualichargeEVSEPlug,
 } from "@/types/irve";
 
 export function formatNullable(value: string | number | null | undefined, fallback = "Non renseigné") {
@@ -34,6 +38,22 @@ export function formatDate(value: string | null | undefined) {
   return new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(date);
 }
 
+export function formatDateTime(value: string | null | undefined) {
+  if (!value) {
+    return "Donnée dynamique manquante";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "long",
+    timeStyle: "short",
+  }).format(date);
+}
+
 export function getPowerSeverity(power: number) {
   if (power >= 150) return "error" as const;
   if (power >= 50) return "warning" as const;
@@ -48,7 +68,7 @@ export function getAccessSeverity(condition: ConditionAcces) {
 export function getPmrLabel(value: AccessibilitePMR) {
   switch (value) {
     case AccessibilitePMR.RESERVE_PMR:
-      return "Place reservée PMR";
+      return "Place réservée PMR";
     case AccessibilitePMR.NON_RESERVE:
       return "Place accessible PMR";
     case AccessibilitePMR.NON_ACCESSIBLE:
@@ -73,17 +93,107 @@ export function getStationTypeLabel(value: ImplantationStation) {
   }
 }
 
-export function getConnectorTags(station: QualichargeEVSEStatique) {
+export function getDynamicStatusSeverity(status?: EtatPDCEnum) {
+  switch (status) {
+    case EtatPDCEnum.EN_SERVICE:
+      return "success" as const;
+    case EtatPDCEnum.HORS_SERVICE:
+      return "error" as const;
+    default:
+      return "info" as const;
+  }
+}
+
+export function getOccupationSeverity(status?: OccupationPDCEnum) {
+  switch (status) {
+    case OccupationPDCEnum.LIBRE:
+      return "success" as const;
+    case OccupationPDCEnum.OCCUPE:
+    case OccupationPDCEnum.RESERVE:
+      return "warning" as const;
+    default:
+      return "info" as const;
+  }
+}
+
+export function getEtatPdcLabel(value?: EtatPDCEnum | null) {
+  switch (value) {
+    case EtatPDCEnum.EN_SERVICE:
+      return "En service";
+    case EtatPDCEnum.HORS_SERVICE:
+      return "Hors service";
+    case EtatPDCEnum.INCONNU:
+      return "État inconnu";
+    default:
+      return "Donnée dynamique manquante";
+  }
+}
+
+export function getOccupationLabel(value?: OccupationPDCEnum | null) {
+  switch (value) {
+    case OccupationPDCEnum.LIBRE:
+      return "Libre";
+    case OccupationPDCEnum.OCCUPE:
+      return "Occupé";
+    case OccupationPDCEnum.RESERVE:
+      return "Réservé";
+    case OccupationPDCEnum.INCONNU:
+      return "Occupation inconnue";
+    default:
+      return "Donnée dynamique manquante";
+  }
+}
+
+export function getEtatPriseLabel(value?: EtatPriseEnum | null) {
+  switch (value) {
+    case EtatPriseEnum.FONCTIONNEL:
+      return "Fonctionnelle";
+    case EtatPriseEnum.HORS_SERVICE:
+      return "Hors service";
+    case EtatPriseEnum.INCONNU:
+      return "État inconnu";
+    default:
+      return "Donnée dynamique manquante";
+  }
+}
+
+export function getAvailabilityTone(status?: EtatPDCEnum | null) {
+  switch (status) {
+    case EtatPDCEnum.EN_SERVICE:
+      return "success" as const;
+    case EtatPDCEnum.HORS_SERVICE:
+      return "error" as const;
+    case EtatPDCEnum.INCONNU:
+      return "warning" as const;
+    default:
+      return "new" as const;
+  }
+}
+
+export function getConnectorAvailabilityTone(value?: EtatPriseEnum | null) {
+  switch (value) {
+    case EtatPriseEnum.FONCTIONNEL:
+      return "success" as const;
+    case EtatPriseEnum.HORS_SERVICE:
+      return "error" as const;
+    case EtatPriseEnum.INCONNU:
+      return "warning" as const;
+    default:
+      return "new" as const;
+  }
+}
+
+export function getConnectorTags(station: QualichargeEVSEConsolidated) {
   return [
-    station.prise_type_2 && "Type 2",
-    station.prise_type_combo_ccs && "Combo CCS",
-    station.prise_type_chademo && "CHAdeMO",
-    station.prise_type_ef && "Prise EF",
-    station.prise_type_autre && "Autre prise",
+    station.has_prise_type_2 && "Type 2",
+    station.has_prise_type_combo_ccs && "Combo CCS",
+    station.has_prise_type_chademo && "CHAdeMO",
+    station.has_prise_type_ef && "Prise EF",
+    station.has_prise_type_autre && "Autre prise",
   ].filter(Boolean) as string[];
 }
 
-export function getPaymentTags(station: QualichargeEVSEStatique) {
+export function getPaymentTags(station: QualichargeEVSEConsolidated) {
   return [
     station.gratuit === true && "Recharge gratuite",
     station.paiement_acte && "Paiement a l'acte",
@@ -91,4 +201,35 @@ export function getPaymentTags(station: QualichargeEVSEStatique) {
     station.paiement_autre === true && "Autre paiement",
     station.reservation && "Reservation disponible",
   ].filter(Boolean) as string[];
+}
+
+export function getStationDynamicSummary(station: QualichargeEVSEConsolidated) {
+  const plugsWithDynamic = station.plugs.filter((plug) => plug.dynamic);
+  const latestPlug = plugsWithDynamic.reduce<QualichargeEVSEPlug | null>((latest, plug) => {
+    if (!plug.dynamic?.horodatage) {
+      return latest;
+    }
+
+    if (!latest?.dynamic?.horodatage) {
+      return plug;
+    }
+
+    return new Date(plug.dynamic.horodatage).getTime() > new Date(latest.dynamic.horodatage).getTime()
+      ? plug
+      : latest;
+  }, null);
+
+  const enServiceCount = plugsWithDynamic.filter((plug) => plug.dynamic?.etat_pdc === EtatPDCEnum.EN_SERVICE).length;
+  const libreCount = plugsWithDynamic.filter((plug) => plug.dynamic?.occupation_pdc === OccupationPDCEnum.LIBRE).length;
+  const occupiedCount = plugsWithDynamic.filter((plug) => plug.dynamic?.occupation_pdc === OccupationPDCEnum.OCCUPE).length;
+  const reservedCount = plugsWithDynamic.filter((plug) => plug.dynamic?.occupation_pdc === OccupationPDCEnum.RESERVE).length;
+
+  return {
+    plugsWithDynamicCount: plugsWithDynamic.length,
+    enServiceCount,
+    libreCount,
+    occupiedCount,
+    reservedCount,
+    latestDynamic: latestPlug?.dynamic,
+  };
 }

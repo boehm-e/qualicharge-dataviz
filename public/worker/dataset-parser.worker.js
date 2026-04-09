@@ -7505,7 +7505,8 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
   };
 
   // src/workers/dataset-parser.worker.ts
-  var PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/8bb0a6e2-1016-42ba-aaee-f72f55c82e9f.parquet";
+  var STATIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/8bb0a6e2-1016-42ba-aaee-f72f55c82e9f.parquet";
+  var DYNAMIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/411443b1-6667-473f-8217-1c57c167408f.parquet";
   var ROW_BATCH_SIZE = 2e4;
   var total = 0;
   var nextId = 1;
@@ -7545,7 +7546,7 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
   function toRequiredString(value) {
     return value != null ? value : "";
   }
-  function toRow(row) {
+  function toStaticRow(row) {
     var _a;
     return {
       nom_amenageur: toRequiredString(row.nom_amenageur),
@@ -7590,6 +7591,41 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
       cable_t2_attache: toNullableBoolean(row.cable_t2_attache)
     };
   }
+  function toDynamicRow(row) {
+    return {
+      id_pdc_itinerance: toRequiredString(row.id_pdc_itinerance),
+      horodatage: toRequiredString(row.horodatage),
+      etat_pdc: toRequiredString(row.etat_pdc),
+      occupation_pdc: toRequiredString(row.occupation_pdc),
+      etat_prise_type_2: toNullableString(row.etat_prise_type_2),
+      etat_prise_type_combo_ccs: toNullableString(
+        row.etat_prise_type_combo_ccs
+      ),
+      etat_prise_type_chademo: toNullableString(
+        row.etat_prise_type_chademo
+      ),
+      etat_prise_type_ef: toNullableString(row.etat_prise_type_ef)
+    };
+  }
+  function getDynamicKey(idPdcItinerance) {
+    return toRequiredString(idPdcItinerance);
+  }
+  function getStationKey(idStationItinerance, fallback) {
+    return toRequiredString(idStationItinerance) || toRequiredString(fallback);
+  }
+  async function loadDynamicRows() {
+    const file = await asyncBufferFromUrl({ url: DYNAMIC_PARQUET_URL });
+    const rows = await parquetReadObjects({
+      file,
+      compressors
+    });
+    const dynamicMap = /* @__PURE__ */ new Map();
+    for (const row of rows) {
+      const dynamicRow = toDynamicRow(row);
+      dynamicMap.set(getDynamicKey(dynamicRow.id_pdc_itinerance), dynamicRow);
+    }
+    return dynamicMap;
+  }
   function createFeature(row) {
     if (row.coordonneesXY == null) return null;
     const coords = JSON.parse(row.coordonneesXY);
@@ -7606,7 +7642,7 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
       properties: {
         cluster: false,
         id,
-        row: toRow(row)
+        row
       },
       geometry: {
         type: "Point",
@@ -7614,12 +7650,78 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
       }
     };
   }
+  function consolidateStation(plugs) {
+    const firstPlug = plugs[0];
+    if (!firstPlug) {
+      return null;
+    }
+    let maxPower = 0;
+    let hasPriseTypeEf = false;
+    let hasPriseType2 = false;
+    let hasPriseTypeComboCcs = false;
+    let hasPriseTypeChademo = false;
+    let hasPriseTypeAutre = false;
+    for (const plug of plugs) {
+      if (plug.puissance_nominale > maxPower) {
+        maxPower = plug.puissance_nominale;
+      }
+      hasPriseTypeEf = hasPriseTypeEf || plug.prise_type_ef;
+      hasPriseType2 = hasPriseType2 || plug.prise_type_2;
+      hasPriseTypeComboCcs = hasPriseTypeComboCcs || plug.prise_type_combo_ccs;
+      hasPriseTypeChademo = hasPriseTypeChademo || plug.prise_type_chademo;
+      hasPriseTypeAutre = hasPriseTypeAutre || plug.prise_type_autre;
+    }
+    return {
+      nom_amenageur: firstPlug.nom_amenageur,
+      siren_amenageur: firstPlug.siren_amenageur,
+      contact_amenageur: firstPlug.contact_amenageur,
+      nom_operateur: firstPlug.nom_operateur,
+      contact_operateur: firstPlug.contact_operateur,
+      telephone_operateur: firstPlug.telephone_operateur,
+      nom_enseigne: firstPlug.nom_enseigne,
+      id_station_itinerance: firstPlug.id_station_itinerance,
+      id_station_local: firstPlug.id_station_local,
+      nom_station: firstPlug.nom_station,
+      implantation_station: firstPlug.implantation_station,
+      adresse_station: firstPlug.adresse_station,
+      code_insee_commune: firstPlug.code_insee_commune,
+      coordonneesXY: firstPlug.coordonneesXY,
+      nbre_pdc: firstPlug.nbre_pdc,
+      gratuit: firstPlug.gratuit,
+      paiement_acte: firstPlug.paiement_acte,
+      paiement_cb: firstPlug.paiement_cb,
+      paiement_autre: firstPlug.paiement_autre,
+      tarification: firstPlug.tarification,
+      condition_acces: firstPlug.condition_acces,
+      reservation: firstPlug.reservation,
+      horaires: firstPlug.horaires,
+      accessibilite_pmr: firstPlug.accessibilite_pmr,
+      restriction_gabarit: firstPlug.restriction_gabarit,
+      station_deux_roues: firstPlug.station_deux_roues,
+      raccordement: firstPlug.raccordement,
+      num_pdl: firstPlug.num_pdl,
+      date_mise_en_service: firstPlug.date_mise_en_service,
+      observations: firstPlug.observations,
+      date_maj: firstPlug.date_maj,
+      cable_t2_attache: firstPlug.cable_t2_attache,
+      plugs,
+      max_power: maxPower,
+      has_prise_type_ef: hasPriseTypeEf,
+      has_prise_type_2: hasPriseType2,
+      has_prise_type_combo_ccs: hasPriseTypeComboCcs,
+      has_prise_type_chademo: hasPriseTypeChademo,
+      has_prise_type_autre: hasPriseTypeAutre
+    };
+  }
   async function loadParquet() {
-    postWorkerMessage({ type: "loading", message: "Fetching Parquet metadata..." });
-    const file = await asyncBufferFromUrl({ url: PARQUET_URL });
+    postWorkerMessage({ type: "loading", message: "Fetching dynamic dataset..." });
+    const dynamicMap = await loadDynamicRows();
+    postWorkerMessage({ type: "loading", message: "Fetching static dataset metadata..." });
+    const file = await asyncBufferFromUrl({ url: STATIC_PARQUET_URL });
     const metadata = await parquetMetadataAsync(file);
     const rowCount = Number(metadata.num_rows);
-    postWorkerMessage({ type: "loading", message: "Parsing Parquet..." });
+    const stationMap = /* @__PURE__ */ new Map();
+    postWorkerMessage({ type: "loading", message: "Parsing and merging datasets..." });
     for (let rowStart = 0; rowStart < rowCount; rowStart += ROW_BATCH_SIZE) {
       const rowEnd = Math.min(rowStart + ROW_BATCH_SIZE, rowCount);
       const rows = await parquetReadObjects({
@@ -7628,22 +7730,40 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
         rowStart,
         rowEnd
       });
-      const points = [];
       for (const row of rows) {
-        const point = createFeature(row);
-        if (point) {
-          points.push(point);
+        const staticRow = toStaticRow(row);
+        const consolidatedRow = __spreadProps(__spreadValues({}, staticRow), {
+          dynamic: dynamicMap.get(getDynamicKey(staticRow.id_pdc_itinerance))
+        });
+        const stationKey = getStationKey(staticRow.id_station_itinerance, staticRow.id_pdc_itinerance);
+        const stationPlugs = stationMap.get(stationKey);
+        if (stationPlugs) {
+          stationPlugs.push(consolidatedRow);
+        } else {
+          stationMap.set(stationKey, [consolidatedRow]);
         }
       }
-      if (points.length > 0) {
-        total += points.length;
-        postWorkerMessage({
-          type: "chunk",
-          points,
-          total,
-          batchSize: points.length
-        });
+    }
+    const stations = Array.from(stationMap.values());
+    const points = [];
+    for (const stationPlugs of stations) {
+      const station = consolidateStation(stationPlugs);
+      if (!station) {
+        continue;
       }
+      const point = createFeature(station);
+      if (point) {
+        points.push(point);
+      }
+    }
+    total = points.length;
+    if (points.length > 0) {
+      postWorkerMessage({
+        type: "chunk",
+        points,
+        total,
+        batchSize: points.length
+      });
     }
     postWorkerMessage({ type: "done", total });
   }

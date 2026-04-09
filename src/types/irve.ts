@@ -27,6 +27,25 @@ export enum Raccordement {
   INDIRECT = "Indirect",
 }
 
+export enum EtatPDCEnum {
+  EN_SERVICE = "en_service",
+  HORS_SERVICE = "hors_service",
+  INCONNU = "inconnu",
+}
+
+export enum OccupationPDCEnum {
+  LIBRE = "libre",
+  OCCUPE = "occupe",
+  RESERVE = "reserve",
+  INCONNU = "inconnu",
+}
+
+export enum EtatPriseEnum {
+  FONCTIONNEL = "fonctionnel",
+  HORS_SERVICE = "hors_service",
+  INCONNU = "inconnu",
+}
+
 // ============================================================
 // Branded / constrained primitives
 // ============================================================
@@ -123,4 +142,40 @@ export interface QualichargeEVSEStatique {
   observations?: string | null;
   date_maj: NotFutureDate;
   cable_t2_attache?: boolean | null;
+}
+
+export interface QualichargeEVSEDynamic {
+  id_pdc_itinerance: string;
+  horodatage: string;
+  etat_pdc: EtatPDCEnum;
+  occupation_pdc: OccupationPDCEnum;
+  etat_prise_type_2?: EtatPriseEnum | null;
+  etat_prise_type_combo_ccs?: EtatPriseEnum | null;
+  etat_prise_type_chademo?: EtatPriseEnum | null;
+  etat_prise_type_ef?: EtatPriseEnum | null;
+}
+
+export type QualichargeEVSEPlug = QualichargeEVSEStatique & {
+  dynamic?: QualichargeEVSEDynamic;
+};
+
+export interface QualichargeEVSEConsolidated
+  extends Omit<
+    QualichargeEVSEStatique,
+    | "id_pdc_itinerance"
+    | "id_pdc_local"
+    | "puissance_nominale"
+    | "prise_type_ef"
+    | "prise_type_2"
+    | "prise_type_combo_ccs"
+    | "prise_type_chademo"
+    | "prise_type_autre"
+  > {
+  plugs: QualichargeEVSEPlug[];
+  max_power: number;
+  has_prise_type_ef: boolean;
+  has_prise_type_2: boolean;
+  has_prise_type_combo_ccs: boolean;
+  has_prise_type_chademo: boolean;
+  has_prise_type_autre: boolean;
 }

@@ -1,5 +1,8 @@
 {
-    "window.autoDetectColorScheme": true,
-    "workbench.colorTheme": "Default Dark+",
-    "workbench.preferredDarkColorTheme": "Default Dark+"
+  "window.autoDetectColorScheme": true,
+  "workbench.colorTheme": "Default Dark+",
+  "workbench.preferredDarkColorTheme": "Default Dark+",
+  "jupyter.jupyterCommandLineArguments": [
+    "--notebook-dir='/home/erwan/Desktop/clients/MinistereTransitionEcologique/qualicharge-dataviz/'"
+  ]
 }

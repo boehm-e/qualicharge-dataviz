@@ -1,4 +1,4 @@
-import { Raccordement, type QualichargeEVSEStatique } from "@/types/irve";
+import { Raccordement, type QualichargeEVSEConsolidated } from "@/types/irve";
 
 export type DetailItem = {
   label: string;
@@ -11,7 +11,7 @@ export type DetailSection = {
   items: DetailItem[];
 };
 
-export function buildSections(station: QualichargeEVSEStatique): DetailSection[] {
+export function buildSections(station: QualichargeEVSEConsolidated): DetailSection[] {
   return [
     {
       title: "Identite",
@@ -31,6 +31,8 @@ export function buildSections(station: QualichargeEVSEStatique): DetailSection[]
           label: "Raccordement",
           rawValue: station.raccordement === Raccordement.DIRECT ? "Direct" : "Indirect",
         },
+        { label: "Puissance max", rawValue: `${station.max_power} kW` },
+        { label: "Nombre de PDC", rawValue: String(station.nbre_pdc) },
         { label: "Numero PDL", rawValue: station.num_pdl, copyable: true },
         { label: "Cable T2 attache", rawValue: String(station.cable_t2_attache ?? null) },
         { label: "Station deux-roues", rawValue: String(station.station_deux_roues) },
@@ -65,8 +67,6 @@ export function buildSections(station: QualichargeEVSEStatique): DetailSection[]
       items: [
         { label: "ID station itinerance", rawValue: station.id_station_itinerance, copyable: true },
         { label: "ID station local", rawValue: station.id_station_local, copyable: true },
-        { label: "ID point de charge itinerance", rawValue: station.id_pdc_itinerance, copyable: true },
-        { label: "ID point de charge local", rawValue: station.id_pdc_local, copyable: true },
       ],
     },
   ];

@@ -8,7 +8,7 @@ import { Badge } from "@codegouvfr/react-dsfr/Badge";
 
 import { useIRVEData } from "@/hooks/useIRVEData";
 import { useMapClusters } from "@/hooks/useMapClusters";
-import type { QualichargeEVSEStatique } from "@/types/irve";
+import type { QualichargeEVSEConsolidated } from "@/types/irve";
 import {
   DEFAULT_MAP_FILTERS,
   getActiveFilterCount,
@@ -33,7 +33,7 @@ export default function IRVEMap() {
   const { points, loadState } = useIRVEData();
   const [filters, setFilters] = useState<MapFiltersState>(DEFAULT_MAP_FILTERS);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [selectedStation, setSelectedStation] = useState<QualichargeEVSEStatique | null>(null);
+  const [selectedStation, setSelectedStation] = useState<QualichargeEVSEConsolidated | null>(null);
 
   const filteredPoints = useMemo(() => {
     return points.filter((point) => matchesStationFilters(point.properties.row, filters));
@@ -49,7 +49,7 @@ export default function IRVEMap() {
     const stationIds = new Set<string>();
 
     for (const station of filteredStations) {
-      stationIds.add(station.id_station_itinerance || station.id_pdc_itinerance);
+      stationIds.add(station.id_station_itinerance || station.adresse_station);
     }
 
     return stationIds.size;
@@ -62,7 +62,7 @@ export default function IRVEMap() {
     }
 
     return filteredPoints.some(
-      (point) => point.properties.row.id_pdc_itinerance === selectedStation.id_pdc_itinerance
+      (point) => point.properties.row.id_station_itinerance === selectedStation.id_station_itinerance
     )
       ? selectedStation
       : null;

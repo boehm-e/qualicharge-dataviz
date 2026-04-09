@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
-const isProd = process.env.NODE_ENV === 'production';
 const repo = 'qualicharge-dataviz';
-const basePath = isProd ? `/${repo}` : '';
+const shouldUseBasePath = process.env.GITHUB_PAGES === 'true';
+const basePath = shouldUseBasePath ? `/${repo}` : '';
 
 
 const nextConfig: NextConfig = {

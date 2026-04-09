@@ -7716,14 +7716,14 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
     };
   }
   async function loadParquet() {
-    postWorkerMessage({ type: "loading", message: "Fetching dynamic dataset..." });
+    postWorkerMessage({ type: "loading", message: "Chargement des disponibilités des bornes..." });
     const dynamicMap = await loadDynamicRows();
-    postWorkerMessage({ type: "loading", message: "Fetching static dataset metadata..." });
+    postWorkerMessage({ type: "loading", message: "Préparation des informations sur les bornes..." });
     const file = await asyncBufferFromUrl({ url: STATIC_PARQUET_URL });
     const metadata = await parquetMetadataAsync(file);
     const rowCount = Number(metadata.num_rows);
     const stationMap = /* @__PURE__ */ new Map();
-    postWorkerMessage({ type: "loading", message: "Parsing and merging datasets..." });
+    postWorkerMessage({ type: "loading", message: "Organisation et mise en forme des données..." });
     for (let rowStart = 0; rowStart < rowCount; rowStart += ROW_BATCH_SIZE) {
       const rowEnd = Math.min(rowStart + ROW_BATCH_SIZE, rowCount);
       const rows = await parquetReadObjects({

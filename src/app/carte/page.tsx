@@ -4,13 +4,15 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
+import { withBasePath } from "@/lib/base-path";
+
 const IRVEMap = dynamic(() => import("@/components/map/IRVEMap"), {
   ssr: false,
   loading: () => (
     <div className="irve-map-skeleton">
       <Image
         className="irve-map-skeleton__image"
-        src="/images/loading.gif"
+        src={withBasePath("/images/loading.gif")}
         alt=""
         aria-hidden="true"
         unoptimized

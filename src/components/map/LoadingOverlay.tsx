@@ -5,6 +5,7 @@ import { Alert } from "@codegouvfr/react-dsfr/Alert";
 import { Badge } from "@codegouvfr/react-dsfr/Badge";
 import { Card } from "@codegouvfr/react-dsfr/Card";
 
+import { withBasePath } from "@/lib/base-path";
 import type { LoadState } from "@/types/irve-runtime";
 
 export interface LoadingOverlayProps {
@@ -38,7 +39,7 @@ export function LoadingOverlay({ loadState }: LoadingOverlayProps) {
             <div className="irve-loading-overlay__content">
               <Image
                 className="irve-loading-overlay__image"
-                src="/images/loading.gif"
+                src={withBasePath("/images/loading.gif")}
                 alt=""
                 aria-hidden="true"
                 unoptimized

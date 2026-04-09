@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { withBasePath } from "@/lib/base-path";
 import type { IRVEPointFeature, LoadState, WorkerMessage } from "@/types/irve-runtime";
 
 export interface UseIRVEDataResult {
@@ -35,7 +36,7 @@ export function useIRVEData(): UseIRVEDataResult {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const worker = new Worker("/worker/dataset-parser.worker.js");
+    const worker = new Worker(withBasePath("/worker/dataset-parser.worker.js"));
     workerRef.current = worker;
 
     worker.onmessage = (event: MessageEvent<WorkerMessage>) => {

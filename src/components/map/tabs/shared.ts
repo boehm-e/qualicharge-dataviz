@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 
+import { withBasePath } from "@/lib/base-path";
 import type { DetailSection, DetailItem } from "@/lib/irve/sections";
 import type {
   EtatPriseEnum,
@@ -105,35 +106,35 @@ export function getConnectorStatusItems(station: QualichargeEVSEConsolidated): C
       label: "Type 2",
       active: station.summary.has_prise_type_2,
       status: undefined,
-      iconPath: "/images/prises/prise_type_2.svg",
+      iconPath: withBasePath("/images/prises/prise_type_2.svg"),
       count: countPlugs((plug) => plug.prise_type_2),
     },
     {
       label: "Combo CCS",
       active: station.summary.has_prise_type_combo_ccs,
       status: undefined,
-      iconPath: "/images/prises/prise_type_combo_ccs.svg",
+      iconPath: withBasePath("/images/prises/prise_type_combo_ccs.svg"),
       count: countPlugs((plug) => plug.prise_type_combo_ccs),
     },
     {
       label: "CHAdeMO",
       active: station.summary.has_prise_type_chademo,
       status: undefined,
-      iconPath: "/images/prises/prise_type_chademo.svg",
+      iconPath: withBasePath("/images/prises/prise_type_chademo.svg"),
       count: countPlugs((plug) => plug.prise_type_chademo),
     },
     {
       label: "Prise EF",
       active: station.summary.has_prise_type_ef,
       status: undefined,
-      iconPath: "/images/prises/prise_type_ef.svg",
+      iconPath: withBasePath("/images/prises/prise_type_ef.svg"),
       count: countPlugs((plug) => plug.prise_type_ef),
     },
     {
       label: "Autre prise",
       active: station.summary.has_prise_type_autre,
       status: null,
-      iconPath: "/images/prises/prise_type_autre.svg",
+      iconPath: withBasePath("/images/prises/prise_type_autre.svg"),
       count: countPlugs((plug) => plug.prise_type_autre),
     },
   ].filter((connector) => connector.active);

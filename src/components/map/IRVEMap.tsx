@@ -3,11 +3,17 @@
 import { useCallback, useMemo, useState } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import type { Map as LeafletMap } from "leaflet";
-import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Badge } from "@codegouvfr/react-dsfr/Badge";
+import { Button } from "@codegouvfr/react-dsfr/Button";
 
 import { useIRVEData } from "@/hooks/useIRVEData";
 import { useMapClusters } from "@/hooks/useMapClusters";
+import {
+  buildHeatmapConfig,
+  getHeatmapDefinition,
+  SERVICE_HEATMAPS,
+  type HeatmapMode,
+} from "@/lib/irve/heatmaps";
 import type { QualichargeEVSEConsolidated } from "@/types/irve";
 import {
   DEFAULT_MAP_FILTERS,
@@ -15,9 +21,11 @@ import {
   matchesStationFilters,
   type MapFiltersState,
 } from "@/lib/irve/mapFilters";
-import { MapEvents } from "./MapEvents";
 import { ClusterLayer } from "./ClusterLayer";
+import { HeatmapLayer } from "./HeatmapLayer";
 import { LoadingOverlay } from "./LoadingOverlay";
+import { MapHeatmapPanel } from "./MapHeatmapPanel";
+import { MapEvents } from "./MapEvents";
 import { MapFiltersPanel } from "./MapFiltersPanel";
 import { StationDetailsPanel } from "./StationDetailsPanel";
 
@@ -25,7 +33,6 @@ import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-defaulticon-compatibility";
 
-// France bounding box
 const FRANCE_CENTER: [number, number] = [46.6, 2.3];
 const INITIAL_ZOOM = 6;
 
@@ -33,7 +40,9 @@ export default function IRVEMap() {
   const { points, loadState } = useIRVEData();
   const [filters, setFilters] = useState<MapFiltersState>(DEFAULT_MAP_FILTERS);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isHeatmapPanelOpen, setIsHeatmapPanelOpen] = useState(false);
   const [selectedStation, setSelectedStation] = useState<QualichargeEVSEConsolidated | null>(null);
+  const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>(null);
 
   const filteredPoints = useMemo(() => {
     return points.filter((point) => matchesStationFilters(point.properties.row, filters));
@@ -56,6 +65,8 @@ export default function IRVEMap() {
   }, [filteredStations]);
   const activeFilterCount = useMemo(() => getActiveFilterCount(filters), [filters]);
   const filteredPointCount = filteredPoints.length;
+  const activeHeatmap = useMemo(() => getHeatmapDefinition(heatmapMode), [heatmapMode]);
+  const heatmapConfig = useMemo(() => buildHeatmapConfig(filteredStations, activeHeatmap), [activeHeatmap, filteredStations]);
   const visibleSelectedStation = useMemo(() => {
     if (!selectedStation) {
       return null;
@@ -84,15 +95,28 @@ export default function IRVEMap() {
 
   return (
     <div className="irve-map-wrapper">
-
       <div className="absolute top-3 right-3 z-[1000] flex items-center gap-2 bg-white p-1.5">
         <Button
           priority={isFiltersOpen ? "primary" : "secondary"}
           size="small"
           iconId="fr-icon-filter-line"
-          onClick={() => setIsFiltersOpen((open) => !open)}
+          onClick={() => {
+            if (isFiltersOpen === false) setIsHeatmapPanelOpen(false);
+            setIsFiltersOpen((open) => !open)
+          }}
         >
           Filtres
+        </Button>
+        <Button
+          priority={isHeatmapPanelOpen ? "primary" : "secondary"}
+          size="small"
+          iconId="fr-icon-line-chart-line"
+          onClick={() => {
+            if (isHeatmapPanelOpen === false) setIsFiltersOpen(false);
+            setIsHeatmapPanelOpen((open) => !open)
+          }}
+        >
+          Analyse
         </Button>
 
         <Badge severity="new">{uniqueStationCount} stations</Badge>
@@ -102,6 +126,17 @@ export default function IRVEMap() {
           </Badge>
         )}
       </div>
+
+      <MapHeatmapPanel
+        isOpen={isHeatmapPanelOpen}
+        onClose={() => setIsHeatmapPanelOpen(false)}
+        heatmapMode={heatmapMode}
+        onModeChange={setHeatmapMode}
+        heatmaps={SERVICE_HEATMAPS}
+        activeHeatmap={activeHeatmap}
+        legendStops={heatmapConfig.stops}
+        activePointCount={heatmapConfig.points.length}
+      />
 
       <MapFiltersPanel
         filters={filters}
@@ -161,13 +196,22 @@ export default function IRVEMap() {
 
         <MapEvents onViewChange={updateView} onMapReady={handleMapReady} />
 
-        <ClusterLayer
-          clusters={clusters}
-          supercluster={supercluster}
-          zoom={zoom}
-          selectedStationId={visibleSelectedStation?.id_station_itinerance ?? null}
-          onStationSelect={setSelectedStation}
-        />
+        {heatmapMode === null ? (
+          <ClusterLayer
+            clusters={clusters}
+            supercluster={supercluster}
+            zoom={zoom}
+            selectedStationId={visibleSelectedStation?.id_station_itinerance ?? null}
+            onStationSelect={setSelectedStation}
+          />
+        ) : (
+          <HeatmapLayer
+            points={heatmapConfig.points}
+            maxIntensity={heatmapConfig.maxIntensity}
+            radius={activeHeatmap?.radius}
+            blur={activeHeatmap?.blur}
+          />
+        )}
       </MapContainer>
 
       <StationDetailsPanel

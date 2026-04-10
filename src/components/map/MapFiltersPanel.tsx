@@ -159,6 +159,7 @@ export function MapFiltersPanel({
   return (
     <MapSidePanel
       id="map-filters"
+      className="z-20"
       isOpen={isOpen}
       onClose={onClose}
       eyebrow="Carte de recharge"

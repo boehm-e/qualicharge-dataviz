@@ -55,6 +55,7 @@ export function StationDetailsPanel({ station, isOpen, onClose }: StationDetails
   return (
     <MapSidePanel
       id="station-details"
+      className="z-10"
       isOpen={isOpen}
       onClose={onClose}
       eyebrow="Station de recharge"

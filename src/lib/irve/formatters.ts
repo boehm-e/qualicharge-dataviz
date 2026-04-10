@@ -230,6 +230,26 @@ export function getPaymentTags(station: QualichargeEVSEConsolidated) {
   ].filter(Boolean) as string[];
 }
 
+export function isFunctionalPlug(plug: QualichargeEVSEPlug) {
+  if (plug.dynamic?.etat_pdc !== EtatPDCEnum.EN_SERVICE) {
+    return false;
+  }
+
+  const connectorStatuses = [
+    plug.dynamic.etat_prise_type_2,
+    plug.dynamic.etat_prise_type_combo_ccs,
+    plug.dynamic.etat_prise_type_chademo,
+    plug.dynamic.etat_prise_type_ef,
+  ];
+
+  const declaredStatuses = connectorStatuses.filter((status) => status != null);
+  if (declaredStatuses.length === 0) {
+    return true;
+  }
+
+  return declaredStatuses.some((status) => status === EtatPriseEnum.FONCTIONNEL);
+}
+
 export function getStationDynamicSummary(station: QualichargeEVSEConsolidated) {
   const plugsWithDynamic = station.plugs.filter((plug) => plug.dynamic);
   const latestPlug = plugsWithDynamic.reduce<QualichargeEVSEPlug | null>((latest, plug) => {
@@ -245,26 +265,6 @@ export function getStationDynamicSummary(station: QualichargeEVSEConsolidated) {
       ? plug
       : latest;
   }, null);
-
-  const isFunctionalPlug = (plug: QualichargeEVSEPlug) => {
-    if (plug.dynamic?.etat_pdc !== EtatPDCEnum.EN_SERVICE) {
-      return false;
-    }
-
-    const connectorStatuses = [
-      plug.dynamic.etat_prise_type_2,
-      plug.dynamic.etat_prise_type_combo_ccs,
-      plug.dynamic.etat_prise_type_chademo,
-      plug.dynamic.etat_prise_type_ef,
-    ];
-
-    const declaredStatuses = connectorStatuses.filter((status) => status != null);
-    if (declaredStatuses.length === 0) {
-      return true;
-    }
-
-    return declaredStatuses.some((status) => status === EtatPriseEnum.FONCTIONNEL);
-  };
 
   const enServiceCount = plugsWithDynamic.filter((plug) => plug.dynamic?.etat_pdc === EtatPDCEnum.EN_SERVICE).length;
   const libreCount = plugsWithDynamic.filter((plug) => plug.dynamic?.occupation_pdc === OccupationPDCEnum.LIBRE).length;

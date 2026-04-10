@@ -29,9 +29,9 @@ export const POWER_FILTER_OPTIONS: Array<{
   description: string;
 }> = [
   { id: "ultra", label: "Ultra-rapide", description: "200 kW et plus" },
-  { id: "veryFast", label: "Tres rapide", description: "100 a 199 kW" },
-  { id: "fast", label: "Rapide", description: "50 a 99 kW" },
-  { id: "standard", label: "Acceleree", description: "22 a 49 kW" },
+  { id: "veryFast", label: "Très rapide", description: "100 à 199 kW" },
+  { id: "fast", label: "Rapide", description: "50 à 99 kW" },
+  { id: "standard", label: "Lente", description: "22 à 49 kW" },
 ];
 
 export const CONNECTOR_FILTER_OPTIONS: Array<{
@@ -50,7 +50,7 @@ export const PAYMENT_FILTER_OPTIONS: Array<{
 }> = [
   { id: "free", label: "Recharge gratuite" },
   { id: "card", label: "Carte bancaire" },
-  { id: "onSite", label: "Paiement a l'acte" },
+  { id: "onSite", label: "Paiement à l'acte" },
 ];
 
 function matchesPower(power: number, filterId: PowerFilterId) {

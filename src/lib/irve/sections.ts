@@ -14,10 +14,10 @@ export type DetailSection = {
 export function buildSections(station: QualichargeEVSEConsolidated): DetailSection[] {
   return [
     {
-      title: "Identite",
+      title: "Identité",
       items: [
         { label: "Adresse", rawValue: station.adresse_station, copyable: true },
-        { label: "Coordonnees", rawValue: station.coordonneesXY, copyable: true },
+        { label: "Coordonnées", rawValue: station.coordonneesXY, copyable: true },
         { label: "Enseigne", rawValue: station.nom_enseigne },
         { label: "Implantation", rawValue: station.implantation_station },
         { label: "Code INSEE", rawValue: station.code_insee_commune, copyable: true },
@@ -33,7 +33,7 @@ export function buildSections(station: QualichargeEVSEConsolidated): DetailSecti
         },
         { label: "Puissance max", rawValue: `${station.summary.max_power} kW` },
         { label: "Nombre de PDC", rawValue: String(station.nbre_pdc) },
-        { label: "Numero PDL", rawValue: station.num_pdl, copyable: true },
+        { label: "Numéro PDL", rawValue: station.num_pdl, copyable: true },
         { label: "Cable T2 attache", rawValue: String(station.cable_t2_attache ?? null) },
         { label: "Station deux-roues", rawValue: String(station.station_deux_roues) },
       ],
@@ -51,14 +51,14 @@ export function buildSections(station: QualichargeEVSEConsolidated): DetailSecti
     {
       title: "Exploitation et suivi",
       items: [
-        { label: "Operateur", rawValue: station.nom_operateur },
-        { label: "Contact operateur", rawValue: station.contact_operateur, copyable: true },
-        { label: "Telephone operateur", rawValue: station.telephone_operateur, copyable: true },
-        { label: "Amenageur", rawValue: station.nom_amenageur },
-        { label: "Contact amenageur", rawValue: station.contact_amenageur, copyable: true },
-        { label: "SIREN amenageur", rawValue: station.siren_amenageur, copyable: true },
+        { label: "Opérateur", rawValue: station.nom_operateur },
+        { label: "Contact opérateur", rawValue: station.contact_operateur, copyable: true },
+        { label: "Telephone opérateur", rawValue: station.telephone_operateur, copyable: true },
+        { label: "Aménageur", rawValue: station.nom_amenageur },
+        { label: "Contact aménageur", rawValue: station.contact_amenageur, copyable: true },
+        { label: "SIREN aménageur", rawValue: station.siren_amenageur, copyable: true },
         { label: "Mise en service", rawValue: station.date_mise_en_service },
-        { label: "Derniere mise a jour", rawValue: station.date_maj },
+        { label: "Dernière mise à jour", rawValue: station.date_maj },
         { label: "Observations", rawValue: station.observations },
       ],
     },

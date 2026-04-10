@@ -6,7 +6,7 @@ import {
   ImplantationStation,
   OccupationPDCEnum,
   type QualichargeEVSEConsolidated,
-  type QualichargeEVSEPlug,
+  type QualichargeEVSEPdc,
 } from "@/types/irve";
 
 export function formatNullable(value: string | number | null | undefined, fallback = "Non renseigné") {
@@ -210,6 +210,19 @@ export function getConnectorAvailabilityTone(value?: EtatPriseEnum | null) {
   }
 }
 
+export function getConnectorStateSeverity(value?: EtatPriseEnum | null) {
+  switch (value) {
+    case EtatPriseEnum.FONCTIONNEL:
+      return "success" as const;
+    case EtatPriseEnum.HORS_SERVICE:
+      return "error" as const;
+    case EtatPriseEnum.INCONNU:
+      return "warning" as const;
+    default:
+      return "new" as const;
+  }
+}
+
 export function getConnectorTags(station: QualichargeEVSEConsolidated) {
   return [
     station.summary.has_prise_type_2 && "Type 2",
@@ -230,16 +243,16 @@ export function getPaymentTags(station: QualichargeEVSEConsolidated) {
   ].filter(Boolean) as string[];
 }
 
-export function isFunctionalPlug(plug: QualichargeEVSEPlug) {
-  if (plug.dynamic?.etat_pdc !== EtatPDCEnum.EN_SERVICE) {
+export function isFunctionalPdc(pdc: QualichargeEVSEPdc) {
+  if (pdc.dynamic?.etat_pdc !== EtatPDCEnum.EN_SERVICE) {
     return false;
   }
 
   const connectorStatuses = [
-    plug.dynamic.etat_prise_type_2,
-    plug.dynamic.etat_prise_type_combo_ccs,
-    plug.dynamic.etat_prise_type_chademo,
-    plug.dynamic.etat_prise_type_ef,
+    pdc.dynamic.etat_prise_type_2,
+    pdc.dynamic.etat_prise_type_combo_ccs,
+    pdc.dynamic.etat_prise_type_chademo,
+    pdc.dynamic.etat_prise_type_ef,
   ];
 
   const declaredStatuses = connectorStatuses.filter((status) => status != null);
@@ -251,36 +264,36 @@ export function isFunctionalPlug(plug: QualichargeEVSEPlug) {
 }
 
 export function getStationDynamicSummary(station: QualichargeEVSEConsolidated) {
-  const plugsWithDynamic = station.plugs.filter((plug) => plug.dynamic);
-  const latestPlug = plugsWithDynamic.reduce<QualichargeEVSEPlug | null>((latest, plug) => {
-    if (!plug.dynamic?.horodatage) {
+  const pdcsWithDynamic = station.pdcs.filter((pdc) => pdc.dynamic);
+  const latestPdc = pdcsWithDynamic.reduce<QualichargeEVSEPdc | null>((latest, pdc) => {
+    if (!pdc.dynamic?.horodatage) {
       return latest;
     }
 
     if (!latest?.dynamic?.horodatage) {
-      return plug;
+      return pdc;
     }
 
-    return new Date(plug.dynamic.horodatage).getTime() > new Date(latest.dynamic.horodatage).getTime()
-      ? plug
+    return new Date(pdc.dynamic.horodatage).getTime() > new Date(latest.dynamic.horodatage).getTime()
+      ? pdc
       : latest;
   }, null);
 
-  const enServiceCount = plugsWithDynamic.filter((plug) => plug.dynamic?.etat_pdc === EtatPDCEnum.EN_SERVICE).length;
-  const libreCount = plugsWithDynamic.filter((plug) => plug.dynamic?.occupation_pdc === OccupationPDCEnum.LIBRE).length;
-  const occupiedCount = plugsWithDynamic.filter((plug) => plug.dynamic?.occupation_pdc === OccupationPDCEnum.OCCUPE).length;
-  const reservedCount = plugsWithDynamic.filter((plug) => plug.dynamic?.occupation_pdc === OccupationPDCEnum.RESERVE).length;
-  const availableCount = plugsWithDynamic.filter(
-    (plug) => plug.dynamic?.occupation_pdc === OccupationPDCEnum.LIBRE && isFunctionalPlug(plug)
+  const enServiceCount = pdcsWithDynamic.filter((pdc) => pdc.dynamic?.etat_pdc === EtatPDCEnum.EN_SERVICE).length;
+  const libreCount = pdcsWithDynamic.filter((pdc) => pdc.dynamic?.occupation_pdc === OccupationPDCEnum.LIBRE).length;
+  const occupiedCount = pdcsWithDynamic.filter((pdc) => pdc.dynamic?.occupation_pdc === OccupationPDCEnum.OCCUPE).length;
+  const reservedCount = pdcsWithDynamic.filter((pdc) => pdc.dynamic?.occupation_pdc === OccupationPDCEnum.RESERVE).length;
+  const availableCount = pdcsWithDynamic.filter(
+    (pdc) => pdc.dynamic?.occupation_pdc === OccupationPDCEnum.LIBRE && isFunctionalPdc(pdc)
   ).length;
 
   return {
-    plugsWithDynamicCount: plugsWithDynamic.length,
+    pdcsWithDynamicCount: pdcsWithDynamic.length,
     enServiceCount,
     libreCount,
     occupiedCount,
     reservedCount,
     availableCount,
-    latestDynamic: latestPlug?.dynamic,
+    latestDynamic: latestPdc?.dynamic,
   };
 }

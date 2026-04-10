@@ -73,7 +73,7 @@ export function StationDetailsPanel({ station, isOpen, onClose }: StationDetails
           onTabChange={(tabId) => setSelectedTabId(tabId as StationTabId)}
           tabs={[
             { tabId: "essentiel", label: "Essentiel", iconId: "fr-icon-information-line" },
-            { tabId: "connecteurs", label: "Connecteurs", iconId: "fr-icon-flashlight-line" },
+             { tabId: "connecteurs", label: "Prises", iconId: "fr-icon-flashlight-line" },
             { tabId: "acces", label: "Services", iconId: "fr-icon-user-line" },
             { tabId: "details", label: "Détails", iconId: "fr-icon-list-unordered" },
           ]}

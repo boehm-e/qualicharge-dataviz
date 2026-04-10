@@ -2,12 +2,13 @@ import type { Dispatch, SetStateAction } from "react";
 
 import { withBasePath } from "@/lib/base-path";
 import type { DetailSection, DetailItem } from "@/lib/irve/sections";
-import type {
+import {
   EtatPriseEnum,
-  ImplantationStation,
-  QualichargeEVSEConsolidated,
-  QualichargeEVSEPlug,
-  AccessibilitePMR,
+  type OccupationPDCEnum,
+  type ImplantationStation,
+  type QualichargeEVSEConsolidated,
+  type QualichargeEVSEPdc,
+  type AccessibilitePMR,
 } from "@/types/irve";
 import {
   formatBoolean,
@@ -40,10 +41,16 @@ export type DetailsTabProps = StationDetailsTabProps & CopyState & {
 
 export type ConnectorStatusItem = {
   label: string;
-  active: boolean;
-  status?: EtatPriseEnum | null;
   iconPath: string;
-  count: number;
+  maxPower: number;
+  availableCount: number;
+  totalCount: number;
+  pdcs: Array<{
+    id: string;
+    connectorStatus?: EtatPriseEnum | null;
+    occupationStatus?: OccupationPDCEnum | null;
+  }>;
+  connectorStatuses: Array<EtatPriseEnum | null | undefined>;
 };
 
 export type ConnectorsTabProps = StationDetailsTabProps & {
@@ -72,7 +79,8 @@ export function resolveDisplayValue(item: DetailItem): string {
     case "Contact amenageur":
     case "Code INSEE":
     case "Numero PDL":
-    case "Puissance max":
+    case "Puissance max par PDC":
+    case "Puissance totale station":
     case "Nombre de PDC":
     case "ID station itinerance":
     case "ID station local":
@@ -98,44 +106,85 @@ export function resolveDisplayValue(item: DetailItem): string {
 }
 
 export function getConnectorStatusItems(station: QualichargeEVSEConsolidated): ConnectorStatusItem[] {
-  const countPlugs = (predicate: (plug: QualichargeEVSEPlug) => boolean) =>
-    station.plugs.filter(predicate).length;
+  function buildConnectorStatusItem(config: {
+    label: string;
+    iconPath: string;
+    predicate: (pdc: QualichargeEVSEPdc) => boolean;
+    getConnectorStatus: (pdc: QualichargeEVSEPdc) => EtatPriseEnum | null | undefined;
+  }): ConnectorStatusItem[] {
+    const matchingPdcs = station.pdcs.filter(config.predicate);
+
+    if (matchingPdcs.length === 0) {
+      return [];
+    }
+
+    const pdcsByPower = new Map<number, QualichargeEVSEPdc[]>();
+
+    for (const pdc of matchingPdcs) {
+      const powerGroup = pdcsByPower.get(pdc.puissance_nominale);
+
+      if (powerGroup) {
+        powerGroup.push(pdc);
+      } else {
+        pdcsByPower.set(pdc.puissance_nominale, [pdc]);
+      }
+    }
+
+    return Array.from(pdcsByPower.entries())
+      .sort(([powerA], [powerB]) => powerB - powerA)
+      .map(([power, groupedPdcs]) => {
+        const availableCount = groupedPdcs.filter((pdc) => {
+          const connectorStatus = config.getConnectorStatus(pdc);
+
+          return pdc.dynamic?.occupation_pdc === "libre" && connectorStatus !== EtatPriseEnum.HORS_SERVICE;
+        }).length;
+
+        return {
+          label: config.label,
+          iconPath: config.iconPath,
+          maxPower: power,
+          availableCount,
+          totalCount: groupedPdcs.length,
+          pdcs: groupedPdcs.map((pdc) => ({
+            id: pdc.id_pdc_itinerance,
+            connectorStatus: config.getConnectorStatus(pdc),
+            occupationStatus: pdc.dynamic?.occupation_pdc,
+          })),
+          connectorStatuses: groupedPdcs.map((pdc) => config.getConnectorStatus(pdc)),
+        } satisfies ConnectorStatusItem;
+      });
+  }
 
   return [
-    {
+    ...buildConnectorStatusItem({
       label: "Type 2",
-      active: station.summary.has_prise_type_2,
-      status: undefined,
       iconPath: withBasePath("/images/prises/prise_type_2.svg"),
-      count: countPlugs((plug) => plug.prise_type_2),
-    },
-    {
+      predicate: (pdc) => pdc.prise_type_2,
+      getConnectorStatus: (pdc) => pdc.dynamic?.etat_prise_type_2,
+    }),
+    ...buildConnectorStatusItem({
       label: "Combo CCS",
-      active: station.summary.has_prise_type_combo_ccs,
-      status: undefined,
       iconPath: withBasePath("/images/prises/prise_type_combo_ccs.svg"),
-      count: countPlugs((plug) => plug.prise_type_combo_ccs),
-    },
-    {
+      predicate: (pdc) => pdc.prise_type_combo_ccs,
+      getConnectorStatus: (pdc) => pdc.dynamic?.etat_prise_type_combo_ccs,
+    }),
+    ...buildConnectorStatusItem({
       label: "CHAdeMO",
-      active: station.summary.has_prise_type_chademo,
-      status: undefined,
       iconPath: withBasePath("/images/prises/prise_type_chademo.svg"),
-      count: countPlugs((plug) => plug.prise_type_chademo),
-    },
-    {
+      predicate: (pdc) => pdc.prise_type_chademo,
+      getConnectorStatus: (pdc) => pdc.dynamic?.etat_prise_type_chademo,
+    }),
+    ...buildConnectorStatusItem({
       label: "Prise EF",
-      active: station.summary.has_prise_type_ef,
-      status: undefined,
       iconPath: withBasePath("/images/prises/prise_type_ef.svg"),
-      count: countPlugs((plug) => plug.prise_type_ef),
-    },
-    {
+      predicate: (pdc) => pdc.prise_type_ef,
+      getConnectorStatus: (pdc) => pdc.dynamic?.etat_prise_type_ef,
+    }),
+    ...buildConnectorStatusItem({
       label: "Autre prise",
-      active: station.summary.has_prise_type_autre,
-      status: null,
       iconPath: withBasePath("/images/prises/prise_type_autre.svg"),
-      count: countPlugs((plug) => plug.prise_type_autre),
-    },
-  ].filter((connector) => connector.active);
+      predicate: (pdc) => pdc.prise_type_autre,
+      getConnectorStatus: () => null,
+    }),
+  ];
 }

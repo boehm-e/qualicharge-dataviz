@@ -4,7 +4,7 @@ import { compressors } from "hyparquet-compressors";
 import type {
   QualichargeEVSEConsolidated,
   QualichargeEVSEDynamic,
-  QualichargeEVSEPlug,
+  QualichargeEVSEPdc,
   QualichargeEVSEStatique,
 } from "@/types/irve";
 import type {
@@ -186,67 +186,70 @@ function createFeature(row: QualichargeEVSEConsolidated): IRVEPointFeature | nul
   };
 }
 
-function consolidateStation(plugs: QualichargeEVSEPlug[]): QualichargeEVSEConsolidated | null {
-  const firstPlug = plugs[0];
-  if (!firstPlug) {
+function consolidateStation(pdcs: QualichargeEVSEPdc[]): QualichargeEVSEConsolidated | null {
+  const firstPdc = pdcs[0];
+  if (!firstPdc) {
     return null;
   }
 
   let maxPower = 0;
+  let totalPower = 0;
   let hasPriseTypeEf = false;
   let hasPriseType2 = false;
   let hasPriseTypeComboCcs = false;
   let hasPriseTypeChademo = false;
   let hasPriseTypeAutre = false;
 
-  for (const plug of plugs) {
-    if (plug.puissance_nominale > maxPower) {
-      maxPower = plug.puissance_nominale;
+  for (const pdc of pdcs) {
+    totalPower += pdc.puissance_nominale;
+    if (pdc.puissance_nominale > maxPower) {
+      maxPower = pdc.puissance_nominale;
     }
 
-    hasPriseTypeEf = hasPriseTypeEf || plug.prise_type_ef;
-    hasPriseType2 = hasPriseType2 || plug.prise_type_2;
-    hasPriseTypeComboCcs = hasPriseTypeComboCcs || plug.prise_type_combo_ccs;
-    hasPriseTypeChademo = hasPriseTypeChademo || plug.prise_type_chademo;
-    hasPriseTypeAutre = hasPriseTypeAutre || plug.prise_type_autre;
+    hasPriseTypeEf = hasPriseTypeEf || pdc.prise_type_ef;
+    hasPriseType2 = hasPriseType2 || pdc.prise_type_2;
+    hasPriseTypeComboCcs = hasPriseTypeComboCcs || pdc.prise_type_combo_ccs;
+    hasPriseTypeChademo = hasPriseTypeChademo || pdc.prise_type_chademo;
+    hasPriseTypeAutre = hasPriseTypeAutre || pdc.prise_type_autre;
   }
 
   return {
-    nom_amenageur: firstPlug.nom_amenageur,
-    siren_amenageur: firstPlug.siren_amenageur,
-    contact_amenageur: firstPlug.contact_amenageur,
-    nom_operateur: firstPlug.nom_operateur,
-    contact_operateur: firstPlug.contact_operateur,
-    telephone_operateur: firstPlug.telephone_operateur,
-    nom_enseigne: firstPlug.nom_enseigne,
-    id_station_itinerance: firstPlug.id_station_itinerance,
-    id_station_local: firstPlug.id_station_local,
-    nom_station: firstPlug.nom_station,
-    implantation_station: firstPlug.implantation_station,
-    adresse_station: firstPlug.adresse_station,
-    code_insee_commune: firstPlug.code_insee_commune,
-    coordonneesXY: firstPlug.coordonneesXY,
-    nbre_pdc: firstPlug.nbre_pdc,
-    gratuit: firstPlug.gratuit,
-    paiement_acte: firstPlug.paiement_acte,
-    paiement_cb: firstPlug.paiement_cb,
-    paiement_autre: firstPlug.paiement_autre,
-    tarification: firstPlug.tarification,
-    condition_acces: firstPlug.condition_acces,
-    reservation: firstPlug.reservation,
-    horaires: firstPlug.horaires,
-    accessibilite_pmr: firstPlug.accessibilite_pmr,
-    restriction_gabarit: firstPlug.restriction_gabarit,
-    station_deux_roues: firstPlug.station_deux_roues,
-    raccordement: firstPlug.raccordement,
-    num_pdl: firstPlug.num_pdl,
-    date_mise_en_service: firstPlug.date_mise_en_service,
-    observations: firstPlug.observations,
-    date_maj: firstPlug.date_maj,
-    cable_t2_attache: firstPlug.cable_t2_attache,
-    plugs,
+    nom_amenageur: firstPdc.nom_amenageur,
+    siren_amenageur: firstPdc.siren_amenageur,
+    contact_amenageur: firstPdc.contact_amenageur,
+    nom_operateur: firstPdc.nom_operateur,
+    contact_operateur: firstPdc.contact_operateur,
+    telephone_operateur: firstPdc.telephone_operateur,
+    nom_enseigne: firstPdc.nom_enseigne,
+    id_station_itinerance: firstPdc.id_station_itinerance,
+    id_station_local: firstPdc.id_station_local,
+    nom_station: firstPdc.nom_station,
+    implantation_station: firstPdc.implantation_station,
+    adresse_station: firstPdc.adresse_station,
+    code_insee_commune: firstPdc.code_insee_commune,
+    coordonneesXY: firstPdc.coordonneesXY,
+    nbre_pdc: firstPdc.nbre_pdc,
+    gratuit: firstPdc.gratuit,
+    paiement_acte: firstPdc.paiement_acte,
+    paiement_cb: firstPdc.paiement_cb,
+    paiement_autre: firstPdc.paiement_autre,
+    tarification: firstPdc.tarification,
+    condition_acces: firstPdc.condition_acces,
+    reservation: firstPdc.reservation,
+    horaires: firstPdc.horaires,
+    accessibilite_pmr: firstPdc.accessibilite_pmr,
+    restriction_gabarit: firstPdc.restriction_gabarit,
+    station_deux_roues: firstPdc.station_deux_roues,
+    raccordement: firstPdc.raccordement,
+    num_pdl: firstPdc.num_pdl,
+    date_mise_en_service: firstPdc.date_mise_en_service,
+    observations: firstPdc.observations,
+    date_maj: firstPdc.date_maj,
+    cable_t2_attache: firstPdc.cable_t2_attache,
+    pdcs,
     summary: {
       max_power: maxPower,
+      total_power: totalPower,
       has_prise_type_ef: hasPriseTypeEf,
       has_prise_type_2: hasPriseType2,
       has_prise_type_combo_ccs: hasPriseTypeComboCcs,
@@ -266,7 +269,7 @@ async function loadParquet() {
   const file = await asyncBufferFromUrl({ url: STATIC_PARQUET_URL });
   const metadata = await parquetMetadataAsync(file);
   const rowCount = Number(metadata.num_rows);
-  const stationMap = new Map<string, QualichargeEVSEPlug[]>();
+  const stationMap = new Map<string, QualichargeEVSEPdc[]>();
 
   postWorkerMessage({ type: "loading", message: "Organisation et mise en forme des données..." });
 
@@ -281,15 +284,15 @@ async function loadParquet() {
 
     for (const row of rows) {
       const staticRow = toStaticRow(row);
-      const consolidatedRow: QualichargeEVSEPlug = {
+      const consolidatedRow: QualichargeEVSEPdc = {
         ...staticRow,
         dynamic: dynamicMap.get(getDynamicKey(staticRow.id_pdc_itinerance)),
       };
       const stationKey = getStationKey(staticRow.id_station_itinerance, staticRow.id_pdc_itinerance);
-      const stationPlugs = stationMap.get(stationKey);
+      const stationPdcs = stationMap.get(stationKey);
 
-      if (stationPlugs) {
-        stationPlugs.push(consolidatedRow);
+      if (stationPdcs) {
+        stationPdcs.push(consolidatedRow);
       } else {
         stationMap.set(stationKey, [consolidatedRow]);
       }
@@ -299,8 +302,8 @@ async function loadParquet() {
   const stations = Array.from(stationMap.values());
   const points: IRVEPointFeature[] = [];
 
-  for (const stationPlugs of stations) {
-    const station = consolidateStation(stationPlugs);
+  for (const stationPdcs of stations) {
+    const station = consolidateStation(stationPdcs);
     if (!station) {
       continue;
     }

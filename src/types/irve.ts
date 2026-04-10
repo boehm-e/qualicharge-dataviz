@@ -129,7 +129,7 @@ export interface QualichargeEVSEStationBase {
   cable_t2_attache?: boolean | null;
 }
 
-export interface QualichargeEVSEPlugBase {
+export interface QualichargeEVSEPdcBase {
   // --- Point de charge (PDC) ---
   /** Pattern: /^FR[A-Z0-9]{3}E[A-Z0-9]{1,29}$/ or "Non concerné".
    *  AFIREV prefix (first 5 chars) must match id_station_itinerance. */
@@ -146,7 +146,7 @@ export interface QualichargeEVSEPlugBase {
   prise_type_autre: boolean;
 }
 
-export type QualichargeEVSEStatique = QualichargeEVSEStationBase & QualichargeEVSEPlugBase;
+export type QualichargeEVSEStatique = QualichargeEVSEStationBase & QualichargeEVSEPdcBase;
 
 export interface QualichargeEVSEDynamic {
   id_pdc_itinerance: string;
@@ -159,12 +159,13 @@ export interface QualichargeEVSEDynamic {
   etat_prise_type_ef?: EtatPriseEnum | null;
 }
 
-export type QualichargeEVSEPlug = QualichargeEVSEStatique & {
+export type QualichargeEVSEPdc = QualichargeEVSEStatique & {
   dynamic?: QualichargeEVSEDynamic;
 };
 
 export interface QualichargeEVSEStationSummary {
   max_power: number;
+  total_power: number;
   has_prise_type_ef: boolean;
   has_prise_type_2: boolean;
   has_prise_type_combo_ccs: boolean;
@@ -173,6 +174,6 @@ export interface QualichargeEVSEStationSummary {
 }
 
 export interface QualichargeEVSEConsolidated extends QualichargeEVSEStationBase {
-  plugs: QualichargeEVSEPlug[];
+  pdcs: QualichargeEVSEPdc[];
   summary: QualichargeEVSEStationSummary;
 }

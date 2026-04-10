@@ -49,8 +49,8 @@ function getPointPowerLabel(power: number | null | undefined) {
 }
 
 function getPointPlugsLabel(available: number, total: number | null | undefined) {
-  if (!total) return "-/- plugs";
-  return `${available}/${total} 🔌`;
+  if (!total) return "-/- PDC";
+  return `${available}/${total} PDC`;
 }
 
 function getPointIcon(

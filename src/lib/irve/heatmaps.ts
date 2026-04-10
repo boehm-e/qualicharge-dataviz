@@ -1,4 +1,4 @@
-import { getStationDynamicSummary, isFunctionalPlug } from "@/lib/irve/formatters";
+import { getStationDynamicSummary, isFunctionalPdc } from "@/lib/irve/formatters";
 import { EtatPDCEnum, type QualichargeEVSEConsolidated } from "@/types/irve";
 
 export interface HeatmapGradientStop {
@@ -93,7 +93,7 @@ export const SERVICE_HEATMAPS: HeatmapDefinitionWithMetric[] = [
     blur: 22,
     getIntensity: (station) => {
       const summary = getStationDynamicSummary(station);
-      const denominator = Math.max(summary.plugsWithDynamicCount, station.nbre_pdc, 0);
+      const denominator = Math.max(summary.pdcsWithDynamicCount, station.nbre_pdc, 0);
 
       if (denominator <= 0) {
         return null;
@@ -120,8 +120,8 @@ export const SERVICE_HEATMAPS: HeatmapDefinitionWithMetric[] = [
     radius: 28,
     blur: 20,
     getIntensity: (station) => {
-      const count = station.plugs.filter(
-        (plug) => plug.dynamic?.etat_pdc === EtatPDCEnum.HORS_SERVICE || !isFunctionalPlug(plug)
+      const count = station.pdcs.filter(
+        (pdc) => pdc.dynamic?.etat_pdc === EtatPDCEnum.HORS_SERVICE || !isFunctionalPdc(pdc)
       ).length;
 
       return count > 0 ? count : null;

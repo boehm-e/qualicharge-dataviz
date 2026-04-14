@@ -173,6 +173,25 @@ export interface QualichargeEVSEStationSummary {
   has_prise_type_autre: boolean;
 }
 
+export type PowerCurrentType = "ac" | "dc" | "unknown";
+
+export type AfirPowerCategoryId =
+  | "ac_slow_single_phase"
+  | "ac_medium_three_phase"
+  | "ac_fast_three_phase"
+  | "dc_slow"
+  | "dc_fast"
+  | "dc_ultra_fast_level_1"
+  | "dc_ultra_fast_level_2"
+  | "unknown";
+
+export interface AfirPowerCategory {
+  id: AfirPowerCategoryId;
+  currentType: PowerCurrentType;
+  label: string;
+  shortLabel: string;
+}
+
 export interface QualichargeEVSEConsolidated extends QualichargeEVSEStationBase {
   pdcs: QualichargeEVSEPdc[];
   summary: QualichargeEVSEStationSummary;

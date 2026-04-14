@@ -189,7 +189,7 @@ export function MapFiltersPanel({
                 disabled={activeCount === 0}
                 onClick={onReset}
               >
-                Reinitialiser
+                  Reinitialiser
               </Button>
             </div>
           </div>
@@ -198,7 +198,7 @@ export function MapFiltersPanel({
 
       <SegmentedControl
         small
-        legend="Acces"
+         legend="Accès"
         segments={[
           {
             label: "Toutes",
@@ -208,14 +208,14 @@ export function MapFiltersPanel({
             },
           },
           {
-            label: "Accès libre",
+             label: "Accès libre",
             nativeInputProps: {
               checked: filters.access === "free",
               onChange: () => onAccessChange("free"),
             },
           },
           {
-            label: "Accès reservé",
+             label: "Accès reservé",
             nativeInputProps: {
               checked: filters.access === "restricted",
               onChange: () => onAccessChange("restricted"),

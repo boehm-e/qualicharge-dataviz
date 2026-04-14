@@ -28,10 +28,10 @@ export const POWER_FILTER_OPTIONS: Array<{
   label: string;
   description: string;
 }> = [
-  { id: "ultra", label: "Ultra-rapide", description: "200 kW et plus" },
-  { id: "veryFast", label: "Très rapide", description: "100 à 199 kW" },
-  { id: "fast", label: "Rapide", description: "50 à 99 kW" },
-  { id: "standard", label: "Lente", description: "22 à 49 kW" },
+  { id: "ultra", label: "Ultra-rapide", description: "AFIR DC niveau 1 et 2 - 150 kW et plus" },
+  { id: "veryFast", label: "Rapide DC", description: "AFIR DC rapide - 50 a 149 kW" },
+  { id: "fast", label: "AC elevee / DC lente", description: "AFIR AC > 22 kW ou DC < 50 kW" },
+  { id: "standard", label: "AC normale", description: "AFIR AC jusqu'a 22 kW" },
 ];
 
 export const CONNECTOR_FILTER_OPTIONS: Array<{
@@ -56,13 +56,13 @@ export const PAYMENT_FILTER_OPTIONS: Array<{
 function matchesPower(power: number, filterId: PowerFilterId) {
   switch (filterId) {
     case "ultra":
-      return power >= 200;
+      return power >= 150;
     case "veryFast":
-      return power >= 100 && power < 200;
+      return power >= 50 && power < 150;
     case "fast":
-      return power >= 50 && power < 100;
+      return power > 22 && power < 50;
     case "standard":
-      return power >= 22 && power < 50;
+      return power <= 22;
   }
 }
 

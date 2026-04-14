@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Badge } from "@codegouvfr/react-dsfr/Badge";
+import { Notice } from "@codegouvfr/react-dsfr/Notice";
 
 import {
+  getAfirPowerCategorySeverity,
   getConnectorStateSeverity,
   getEtatPriseLabel,
   getOccupationLabel,
@@ -17,12 +19,15 @@ function ConnectorAccordion({
   label,
   iconPath,
   maxPower,
+  powerCategoryLabel,
+  powerCategoryShortLabel,
+  powerCategoryId,
   availableCount,
   totalCount,
   pdcs,
   connectorStatuses,
 }: ConnectorsTabProps["connectorStatusItems"][number]) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [contentHeight, setContentHeight] = useState(0);
 
@@ -63,7 +68,12 @@ function ConnectorAccordion({
             </div>
             <div className="min-w-0">
               <p className="mb-1 text-sm text-(--text-mention-grey)">{label}</p>
-              <p className="mb-0 text-lg font-bold text-(--text-title-grey)">{maxPower} kW max</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="mb-0 text-lg font-bold text-(--text-title-grey)">{maxPower} kW max</p>
+                <Badge severity={getAfirPowerCategorySeverity(powerCategoryId)} small>
+                  {powerCategoryShortLabel}
+                </Badge>
+              </div>
             </div>
           </div>
 
@@ -85,27 +95,40 @@ function ConnectorAccordion({
         className={`irve-filter-accordion__inner${expanded ? " is-expanded" : ""}`}
         style={{ maxHeight: expanded ? `${contentHeight}px` : "0px" }}
       >
-        <div ref={contentRef} className="space-y-4 px-4 pb-4">
-          <p className="mb-0 text-sm text-(--text-mention-grey)">Connecteurs suivis au niveau des PDC</p>
+        <div ref={contentRef} className="space-y-4 pb-4">
+          {/* <p className="mb-0 text-sm text-(--text-mention-grey)">{powerCategoryLabel}</p> */}
+          <Notice
+            description={powerCategoryLabel}
+            link={{
+              linkProps: {
+                href: 'https://eur-lex.europa.eu/FR/legal-content/summary/deployment-of-alternative-fuels-infrastructure.html',
+                target: '_blank'
+              },
+              text: 'En savoir plus'
+            }}
+            severity="info"
+            title="Règlementation AFIR -"
+          />
+
 
           <div className="space-y-2">
             {pdcs.map((pdc, index) => (
               <div
                 key={`${label}-${pdc.id}`}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white p-3"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white py-3"
               >
                 <div className="min-w-0 flex items-center gap-3">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-(--border-default-grey) bg-(--background-alt-grey) text-lg font-medium text-(--text-title-grey)">
                     {index + 1}
                   </div>
-                  <p className="m-0! text-xs break-all text-(--text-mention-grey)">{pdc.id}</p>
+                  <p className="m-0! text-xs! break-all text-(--text-mention-grey)">{pdc.id}</p>
                 </div>
 
                 <div className="flex flex-wrap items-center justify-end gap-2">
-                  <Badge severity={getConnectorStateSeverity(pdc.connectorStatus)}>
+                  <Badge small severity={getConnectorStateSeverity(pdc.connectorStatus)}>
                     {getEtatPriseLabel(pdc.connectorStatus)}
                   </Badge>
-                  <Badge severity={getOccupationSeverity(pdc.occupationStatus ?? undefined)}>
+                  <Badge small severity={getOccupationSeverity(pdc.occupationStatus ?? undefined)}>
                     {getOccupationLabel(pdc.occupationStatus)}
                   </Badge>
                 </div>
@@ -114,7 +137,7 @@ function ConnectorAccordion({
           </div>
 
           {!connectorStatuses.some((status) => status != null) ? (
-            <p className="mb-0 text-xs text-(--text-mention-grey)">
+            <p className="mb-0 text-xs! text-(--text-mention-grey)">
               Pas de statut dynamique specifique pour ce type de prise. Seul l&apos;etat du PDC est disponible.
             </p>
           ) : null}

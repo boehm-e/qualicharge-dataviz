@@ -9,11 +9,14 @@ import {
   type QualichargeEVSEConsolidated,
   type QualichargeEVSEPdc,
   type AccessibilitePMR,
+  AfirPowerCategoryId,
 } from "@/types/irve";
 import {
   formatBoolean,
   formatDate,
   formatNullable,
+  getAfirPowerCategory,
+  getPdcCurrentType,
   getPmrLabel,
   getStationTypeLabel,
 } from "@/lib/irve/formatters";
@@ -43,6 +46,9 @@ export type ConnectorStatusItem = {
   label: string;
   iconPath: string;
   maxPower: number;
+  powerCategoryLabel: string;
+  powerCategoryShortLabel: string;
+  powerCategoryId: AfirPowerCategoryId;
   availableCount: number;
   totalCount: number;
   pdcs: Array<{
@@ -133,6 +139,7 @@ export function getConnectorStatusItems(station: QualichargeEVSEConsolidated): C
     return Array.from(pdcsByPower.entries())
       .sort(([powerA], [powerB]) => powerB - powerA)
       .map(([power, groupedPdcs]) => {
+        const powerCategory = getAfirPowerCategory(power, getPdcCurrentType(groupedPdcs[0]));
         const availableCount = groupedPdcs.filter((pdc) => {
           const connectorStatus = config.getConnectorStatus(pdc);
 
@@ -143,6 +150,9 @@ export function getConnectorStatusItems(station: QualichargeEVSEConsolidated): C
           label: config.label,
           iconPath: config.iconPath,
           maxPower: power,
+          powerCategoryLabel: powerCategory.label,
+          powerCategoryShortLabel: powerCategory.shortLabel,
+          powerCategoryId: powerCategory.id,
           availableCount,
           totalCount: groupedPdcs.length,
           pdcs: groupedPdcs.map((pdc) => ({

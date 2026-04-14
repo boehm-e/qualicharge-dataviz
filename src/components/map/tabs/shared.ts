@@ -18,6 +18,7 @@ import {
   getAfirPowerCategory,
   getPdcCurrentType,
   getPmrLabel,
+  isAvailablePdc,
   getStationTypeLabel,
 } from "@/lib/irve/formatters";
 
@@ -143,7 +144,7 @@ export function getConnectorStatusItems(station: QualichargeEVSEConsolidated): C
         const availableCount = groupedPdcs.filter((pdc) => {
           const connectorStatus = config.getConnectorStatus(pdc);
 
-          return pdc.dynamic?.occupation_pdc === "libre" && connectorStatus !== EtatPriseEnum.HORS_SERVICE;
+          return isAvailablePdc(pdc) && connectorStatus !== EtatPriseEnum.HORS_SERVICE;
         }).length;
 
         return {

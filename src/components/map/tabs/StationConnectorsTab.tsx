@@ -70,15 +70,15 @@ function ConnectorAccordion({
               <p className="mb-1 text-sm text-(--text-mention-grey)">{label}</p>
               <div className="flex flex-wrap items-center gap-2">
                 <p className="mb-0 text-lg font-bold text-(--text-title-grey)">{maxPower} kW max</p>
-                <Badge severity={getAfirPowerCategorySeverity(powerCategoryId)} small>
+                {/* <Badge severity={getAfirPowerCategorySeverity(powerCategoryId)} small>
                   {powerCategoryShortLabel}
-                </Badge>
+                </Badge> */}
               </div>
             </div>
           </div>
 
           <Badge severity={availableCount > 0 ? "success" : "warning"} small>
-            {availableCount} / {totalCount}
+            {availableCount} / {totalCount} PDC libres
           </Badge>
         </div>
       }

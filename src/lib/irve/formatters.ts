@@ -368,6 +368,18 @@ export function isFunctionalPdc(pdc: QualichargeEVSEPdc) {
   return declaredStatuses.some((status) => status === EtatPriseEnum.FONCTIONNEL);
 }
 
+export function isAvailablePdc(pdc: QualichargeEVSEPdc) {
+  if (pdc.dynamic?.occupation_pdc !== OccupationPDCEnum.LIBRE) {
+    return false;
+  }
+
+  if (pdc.dynamic?.etat_pdc == null) {
+    return true;
+  }
+
+  return pdc.dynamic.etat_pdc === EtatPDCEnum.EN_SERVICE;
+}
+
 export function getStationDynamicSummary(station: QualichargeEVSEConsolidated) {
   const pdcsWithDynamic = station.pdcs.filter((pdc) => pdc.dynamic);
   const latestPdc = pdcsWithDynamic.reduce<QualichargeEVSEPdc | null>((latest, pdc) => {
@@ -388,9 +400,7 @@ export function getStationDynamicSummary(station: QualichargeEVSEConsolidated) {
   const libreCount = pdcsWithDynamic.filter((pdc) => pdc.dynamic?.occupation_pdc === OccupationPDCEnum.LIBRE).length;
   const occupiedCount = pdcsWithDynamic.filter((pdc) => pdc.dynamic?.occupation_pdc === OccupationPDCEnum.OCCUPE).length;
   const reservedCount = pdcsWithDynamic.filter((pdc) => pdc.dynamic?.occupation_pdc === OccupationPDCEnum.RESERVE).length;
-  const availableCount = pdcsWithDynamic.filter(
-    (pdc) => pdc.dynamic?.occupation_pdc === OccupationPDCEnum.LIBRE && isFunctionalPdc(pdc)
-  ).length;
+  const availableCount = pdcsWithDynamic.filter(isAvailablePdc).length;
 
   return {
     pdcsWithDynamicCount: pdcsWithDynamic.length,

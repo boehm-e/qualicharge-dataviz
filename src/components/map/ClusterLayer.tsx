@@ -164,7 +164,7 @@ export function ClusterLayer({
         }
         : {
           primaryLabel: getPointPowerLabel(p.summary.max_power),
-          secondaryLabel: getPointPlugsLabel(dynamicSummary.availableCount, p.nbre_pdc),
+          secondaryLabel: getPointPlugsLabel(dynamicSummary.availableCount, p.pdcs.length),
           toneColor: puissanceColor,
         };
 
@@ -177,7 +177,7 @@ export function ClusterLayer({
             markerContent.secondaryLabel,
             markerContent.toneColor,
             isSelected,
-            // `${getPointPlugsLabel(dynamicSummary.availableCount, p.nbre_pdc)} | ${p.id_station_itinerance}`
+            // `${getPointPlugsLabel(dynamicSummary.availableCount, p.pdcs.length)} | ${p.id_station_itinerance}`
           )}
           zIndexOffset={isSelected ? 2000 : 0}
           eventHandlers={{

@@ -33,7 +33,7 @@ export function StationEssentialTab({ station, copiedKey, copy }: EssentialTabPr
                 </Badge>
               </li>
               <li>
-                <Badge severity="new">{station.nbre_pdc} PDC</Badge>
+                <Badge severity="new">{station.pdcs.length} PDC</Badge>
               </li>
               <li>
                 <Badge severity={getAccessSeverity(station.condition_acces)}>

@@ -33,7 +33,7 @@ export function buildSections(station: QualichargeEVSEConsolidated): DetailSecti
         },
         { label: "Puissance max par PDC", rawValue: `${station.summary.max_power} kW` },
         { label: "Puissance totale station", rawValue: `${station.summary.total_power} kW` },
-        { label: "Nombre de PDC", rawValue: String(station.nbre_pdc) },
+        { label: "Nombre de PDC", rawValue: String(station.pdcs.length) },
         { label: "Numéro PDL", rawValue: station.num_pdl, copyable: true },
         { label: "Cable T2 attache", rawValue: String(station.cable_t2_attache ?? null) },
         { label: "Station deux-roues", rawValue: String(station.station_deux_roues) },

@@ -95,7 +95,7 @@ export const SERVICE_HEATMAPS: HeatmapDefinitionWithMetric[] = [
     blur: 22,
     getIntensity: (station) => {
       const summary = getStationDynamicSummary(station);
-      const denominator = Math.max(summary.pdcsWithDynamicCount, station.nbre_pdc, 0);
+      const denominator = Math.max(summary.pdcsWithDynamicCount, station.pdcs.length, 0);
 
       if (denominator <= 0) {
         return null;
@@ -159,7 +159,7 @@ export const SERVICE_HEATMAPS: HeatmapDefinitionWithMetric[] = [
     emptyMessage: "Aucune station avec un nombre de points de charge exploitable.",
     radius: 32,
     blur: 24,
-    getIntensity: (station) => (station.nbre_pdc > 0 ? station.nbre_pdc : null),
+    getIntensity: (station) => (station.pdcs.length > 0 ? station.pdcs.length : null),
     getStops: (maxIntensity) => buildCountStops(maxIntensity, "point", "points"),
   },
 ];

@@ -37,22 +37,6 @@ interface MapFiltersPanelProps {
   onToggleTwoWheels: () => void;
 }
 
-function useDebouncedValue<T>(value: T, delay: number) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [delay, value]);
-
-  return debouncedValue;
-}
-
 interface CheckboxOption {
   checked: boolean;
   hintText?: string;
@@ -155,24 +139,20 @@ export function MapFiltersPanel({
   onTogglePmr,
   onToggleTwoWheels,
 }: MapFiltersPanelProps) {
-  const isInitializedRef = useRef(false);
-  const [itineranceInput, setItineranceInput] = useState(() => filters.itineranceQuery);
-  const [operatorInput, setOperatorInput] = useState(() => filters.operatorQuery);
-  const debouncedItineranceInput = useDebouncedValue(itineranceInput, 250);
-  const debouncedOperatorInput = useDebouncedValue(operatorInput, 250);
+  const itineranceTimeoutRef = useRef<number | null>(null);
+  const operatorTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!isInitializedRef.current) {
-      isInitializedRef.current = true;
-      return;
-    }
+    return () => {
+      if (itineranceTimeoutRef.current !== null) {
+        window.clearTimeout(itineranceTimeoutRef.current);
+      }
 
-    onItineranceQueryChange(debouncedItineranceInput.trim());
-  }, [debouncedItineranceInput, onItineranceQueryChange]);
-
-  useEffect(() => {
-    onOperatorQueryChange(debouncedOperatorInput.trim());
-  }, [debouncedOperatorInput, onOperatorQueryChange]);
+      if (operatorTimeoutRef.current !== null) {
+        window.clearTimeout(operatorTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const serviceToggles = [
     {
@@ -228,7 +208,7 @@ export function MapFiltersPanel({
                 disabled={activeCount === 0}
                 onClick={onReset}
               >
-                Reinitialiser
+                Réinitialiser
               </Button>
             </div>
           </div>
@@ -245,24 +225,46 @@ export function MapFiltersPanel({
             <Input
               label="Identifiant station ou point"
               hintText="Recherche sur `id_station_itinerance` et `id_pdc_itinerance`. Une saisie partielle fonctionne, par exemple les 5 premiers caracteres de l'unite d'exploitation."
-              nativeInputProps={{
-                type: "search",
-                value: itineranceInput,
-                placeholder: "Ex. FRTSLP29984",
-                onChange: (event) => setItineranceInput(event.currentTarget.value),
-              }}
-            />
+                nativeInputProps={{
+                  type: "search",
+                  value: filters.itineranceQuery,
+                  placeholder: "Ex. FRTSLP29984",
+                  onChange: (event) => {
+                    const nextValue = event.currentTarget.value;
+
+                    if (itineranceTimeoutRef.current !== null) {
+                      window.clearTimeout(itineranceTimeoutRef.current);
+                    }
+
+                    itineranceTimeoutRef.current = window.setTimeout(() => {
+                      onItineranceQueryChange(nextValue.trim());
+                      itineranceTimeoutRef.current = null;
+                    }, 250);
+                  },
+                }}
+              />
 
             <Input
               label="Operateur ou amenageur"
               hintText="Recherche libre sur les noms d'operateur et d'amenageur. Exemple : Tesla."
-              nativeInputProps={{
-                type: "search",
-                value: operatorInput,
-                placeholder: "Ex. Tesla, Izivia, Electra",
-                onChange: (event) => setOperatorInput(event.currentTarget.value),
-              }}
-            />
+                nativeInputProps={{
+                  type: "search",
+                  value: filters.operatorQuery,
+                  placeholder: "Ex. Tesla, Izivia, Electra",
+                  onChange: (event) => {
+                    const nextValue = event.currentTarget.value;
+
+                    if (operatorTimeoutRef.current !== null) {
+                      window.clearTimeout(operatorTimeoutRef.current);
+                    }
+
+                    operatorTimeoutRef.current = window.setTimeout(() => {
+                      onOperatorQueryChange(nextValue.trim());
+                      operatorTimeoutRef.current = null;
+                    }, 250);
+                  },
+                }}
+              />
           </div>
         }
       />

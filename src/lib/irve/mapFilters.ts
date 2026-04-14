@@ -8,6 +8,8 @@ export interface MapFiltersState {
   power: PowerFilterId[];
   connectors: Array<"type2" | "ccs" | "chademo" | "ef">;
   payment: Array<"free" | "card" | "onSite">;
+  itineranceQuery: string;
+  operatorQuery: string;
   reservationOnly: boolean;
   pmrOnly: boolean;
   twoWheelsOnly: boolean;
@@ -18,10 +20,30 @@ export const DEFAULT_MAP_FILTERS: MapFiltersState = {
   power: [],
   connectors: [],
   payment: [],
+  itineranceQuery: "",
+  operatorQuery: "",
   reservationOnly: false,
   pmrOnly: false,
   twoWheelsOnly: false,
 };
+
+function normalizeText(value: string | null | undefined) {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function matchesTextQuery(value: string | null | undefined, query: string) {
+  const normalizedQuery = normalizeText(query);
+
+  if (normalizedQuery.length === 0) {
+    return true;
+  }
+
+  return normalizeText(value).includes(normalizedQuery);
+}
 
 export const POWER_FILTER_OPTIONS: Array<{
   id: PowerFilterId;
@@ -73,6 +95,8 @@ export function getActiveFilterCount(filters: MapFiltersState) {
   count += filters.power.length;
   count += filters.connectors.length;
   count += filters.payment.length;
+  if (normalizeText(filters.itineranceQuery).length > 0) count += 1;
+  if (normalizeText(filters.operatorQuery).length > 0) count += 1;
   if (filters.reservationOnly) count += 1;
   if (filters.pmrOnly) count += 1;
   if (filters.twoWheelsOnly) count += 1;
@@ -124,6 +148,20 @@ export function matchesStationFilters(
   }
 
   if (filters.payment.includes("onSite") && !station.paiement_acte) {
+    return false;
+  }
+
+  if (
+    !matchesTextQuery(station.id_station_itinerance, filters.itineranceQuery) &&
+    !station.pdcs.some((pdc) => matchesTextQuery(pdc.id_pdc_itinerance, filters.itineranceQuery))
+  ) {
+    return false;
+  }
+
+  if (
+    !matchesTextQuery(station.nom_operateur, filters.operatorQuery) &&
+    !matchesTextQuery(station.nom_amenageur, filters.operatorQuery)
+  ) {
     return false;
   }
 

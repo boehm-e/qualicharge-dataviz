@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
-import { Alert } from "@codegouvfr/react-dsfr/Alert";
-import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { Badge } from "@codegouvfr/react-dsfr/Badge";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Card } from "@codegouvfr/react-dsfr/Card";
+import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
+import { Input } from "@codegouvfr/react-dsfr/Input";
 import { SegmentedControl } from "@codegouvfr/react-dsfr/SegmentedControl";
 import { ToggleSwitch } from "@codegouvfr/react-dsfr/ToggleSwitch";
 
@@ -30,9 +30,27 @@ interface MapFiltersPanelProps {
   onTogglePower: (value: typeof POWER_FILTER_OPTIONS[number]["id"]) => void;
   onToggleConnector: (value: typeof CONNECTOR_FILTER_OPTIONS[number]["id"]) => void;
   onTogglePayment: (value: typeof PAYMENT_FILTER_OPTIONS[number]["id"]) => void;
+  onItineranceQueryChange: (value: string) => void;
+  onOperatorQueryChange: (value: string) => void;
   onToggleReservation: () => void;
   onTogglePmr: () => void;
   onToggleTwoWheels: () => void;
+}
+
+function useDebouncedValue<T>(value: T, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [delay, value]);
+
+  return debouncedValue;
 }
 
 interface CheckboxOption {
@@ -131,10 +149,31 @@ export function MapFiltersPanel({
   onTogglePower,
   onToggleConnector,
   onTogglePayment,
+  onItineranceQueryChange,
+  onOperatorQueryChange,
   onToggleReservation,
   onTogglePmr,
   onToggleTwoWheels,
 }: MapFiltersPanelProps) {
+  const isInitializedRef = useRef(false);
+  const [itineranceInput, setItineranceInput] = useState(() => filters.itineranceQuery);
+  const [operatorInput, setOperatorInput] = useState(() => filters.operatorQuery);
+  const debouncedItineranceInput = useDebouncedValue(itineranceInput, 250);
+  const debouncedOperatorInput = useDebouncedValue(operatorInput, 250);
+
+  useEffect(() => {
+    if (!isInitializedRef.current) {
+      isInitializedRef.current = true;
+      return;
+    }
+
+    onItineranceQueryChange(debouncedItineranceInput.trim());
+  }, [debouncedItineranceInput, onItineranceQueryChange]);
+
+  useEffect(() => {
+    onOperatorQueryChange(debouncedOperatorInput.trim());
+  }, [debouncedOperatorInput, onOperatorQueryChange]);
+
   const serviceToggles = [
     {
       checked: filters.reservationOnly,
@@ -196,9 +235,41 @@ export function MapFiltersPanel({
         }
       />
 
+      <Card
+        title="Recherche ciblee"
+        titleAs="h3"
+        size="small"
+        border
+        desc={
+          <div className="flex flex-col gap-4">
+            <Input
+              label="Identifiant station ou point"
+              hintText="Recherche sur `id_station_itinerance` et `id_pdc_itinerance`. Une saisie partielle fonctionne, par exemple les 5 premiers caracteres de l'unite d'exploitation."
+              nativeInputProps={{
+                type: "search",
+                value: itineranceInput,
+                placeholder: "Ex. FRTSLP29984",
+                onChange: (event) => setItineranceInput(event.currentTarget.value),
+              }}
+            />
+
+            <Input
+              label="Operateur ou amenageur"
+              hintText="Recherche libre sur les noms d'operateur et d'amenageur. Exemple : Tesla."
+              nativeInputProps={{
+                type: "search",
+                value: operatorInput,
+                placeholder: "Ex. Tesla, Izivia, Electra",
+                onChange: (event) => setOperatorInput(event.currentTarget.value),
+              }}
+            />
+          </div>
+        }
+      />
+
       <SegmentedControl
         small
-         legend="Accès"
+        legend="Acces"
         segments={[
           {
             label: "Toutes",
@@ -208,14 +279,14 @@ export function MapFiltersPanel({
             },
           },
           {
-             label: "Accès libre",
+             label: "Acces libre",
             nativeInputProps: {
               checked: filters.access === "free",
               onChange: () => onAccessChange("free"),
             },
           },
           {
-             label: "Accès reservé",
+              label: "Acces reserve",
             nativeInputProps: {
               checked: filters.access === "restricted",
               onChange: () => onAccessChange("restricted"),

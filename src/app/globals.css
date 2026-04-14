@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  --irve-map-panel-width: min(38rem, 100vw);
   --background: #ffffff;
   --foreground: #171717;
 }

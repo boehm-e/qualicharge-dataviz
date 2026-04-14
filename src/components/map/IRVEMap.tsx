@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
+import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import type { Map as LeafletMap } from "leaflet";
 import { Badge } from "@codegouvfr/react-dsfr/Badge";
 import { Button } from "@codegouvfr/react-dsfr/Button";
@@ -78,6 +79,10 @@ export default function IRVEMap() {
       ? selectedStation
       : null;
   }, [filteredPoints, selectedStation]);
+  const hasOpenPanel = isFiltersOpen || isHeatmapPanelOpen || visibleSelectedStation !== null;
+  const zoomPanelOffsetClass = hasOpenPanel
+    ? "md:left-[calc(var(--irve-map-panel-width)+1.5rem)]"
+    : "md:left-4";
 
   const handleMapReady = useCallback(
     (map: LeafletMap) => {
@@ -165,6 +170,20 @@ export default function IRVEMap() {
             payment: toggleListValue(current.payment, value),
           }))
         }
+        onItineranceQueryChange={(itineranceQuery) =>
+          setFilters((current) =>
+            current.itineranceQuery === itineranceQuery
+              ? current
+              : { ...current, itineranceQuery }
+          )
+        }
+        onOperatorQueryChange={(operatorQuery) =>
+          setFilters((current) =>
+            current.operatorQuery === operatorQuery
+              ? current
+              : { ...current, operatorQuery }
+          )
+        }
         onToggleReservation={() =>
           setFilters((current) => ({ ...current, reservationOnly: !current.reservationOnly }))
         }
@@ -184,9 +203,30 @@ export default function IRVEMap() {
         zoomAnimation={true}
         markerZoomAnimation={true}
         fadeAnimation={true}
-        zoomControl={true}
+        zoomControl={false}
         attributionControl={true}
       >
+        <div className={`pointer-events-none absolute left-4 top-4 z-[1000] transition-[left] duration-[280ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] md:top-4 ${zoomPanelOffsetClass}`}>
+          <div className="flex flex-col gap-2 pointer-events-auto">
+            <div className="bg-white">
+              <Button
+                priority="secondary"
+                iconId="fr-icon-add-line"
+                onClick={() => mapRef.current?.zoomIn()}
+                title="Label button"
+              />
+            </div>
+            <div className="bg-white">
+              <Button
+                priority="secondary"
+                iconId="fr-icon-subtract-line"
+                onClick={() => mapRef.current?.zoomOut()}
+                title="Label button"
+              />
+            </div>
+          </div>
+        </div>
+
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

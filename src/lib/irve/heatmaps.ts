@@ -17,7 +17,7 @@ export interface HeatmapPoint {
   intensity: number;
 }
 
-export type HeatmapMode = "plugCount" | "availabilityRatio" | "outOfService" | "serviceCoverage" | null;
+export type HeatmapMode = "plugCount" | "availabilityRatio" | "outOfService" | "serviceCoverage" | "pricing" | null;
 
 export interface HeatmapDefinition {
   value: Exclude<HeatmapMode, null>;
@@ -143,6 +143,29 @@ export const SERVICE_HEATMAPS: HeatmapDefinitionWithMetric[] = [
       return summary.availableCount > 0 ? summary.availableCount : null;
     },
     getStops: (maxIntensity) => buildCountStops(maxIntensity, "point disponible", "points disponibles"),
+  },
+  {
+    value: "pricing",
+    label: "Tarification actuelle des stations",
+    shortLabel: "Tarification",
+    description:
+      "Compare les stations selon le tarif extrait du champ de tarification, quand un prix par kWh exploitable est disponible.",
+    legendTitle: "Prix estime par kWh",
+    emptyMessage: "Aucune tarification exploitable n'a pu etre extraite dans la selection courante.",
+    radius: 30,
+    blur: 22,
+    getIntensity: (station) => station.summary.price_per_kwh,
+    getStops: (maxIntensity) => {
+      const safeMax = Math.max(maxIntensity, 0.1);
+      const values = [0, 0.25, 0.5, 0.75, 1].map((ratio) => Number((safeMax * ratio).toFixed(2)));
+      const colors = Object.values(DEFAULT_HEATMAP_GRADIENT);
+
+      return values.map((value, index) => ({
+        value,
+        color: colors[index],
+        label: `${value.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} EUR/kWh`,
+      }));
+    },
   },
   {
     value: "plugCount",

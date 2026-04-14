@@ -21,7 +21,7 @@ import {
   getStationTypeLabel,
 } from "@/lib/irve/formatters";
 
-export type StationTabId = "essentiel" | "connecteurs" | "acces" | "details";
+export type StationTabId = "essentiel" | "connecteurs" | "acces" | "tarification" | "details";
 
 export type StationDetailsTabProps = {
   station: QualichargeEVSEConsolidated;

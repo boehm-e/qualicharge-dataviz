@@ -101,7 +101,7 @@ export function MapSidePanel({
         </div>
 
         <div
-          className={`min-h-0 flex flex-col gap-4 overflow-y-auto p-4${bodyClassName ? ` ${bodyClassName}` : ""}`}
+          className={`min-h-0 flex flex-col gap-4 overflow-y-auto p-4 ${bodyClassName ? ` ${bodyClassName}` : ""}`}
         >
           {children}
         </div>

@@ -9,9 +9,12 @@ import type SuperclusterType from "supercluster";
 import type { IRVEClusterOrPoint, IRVEPointProperties } from "@/types/irve-runtime";
 import { isClusterFeature } from "@/hooks/useMapClusters";
 import { getStationDynamicSummary } from "@/lib/irve/formatters";
+import { getPricingMarkerContent, getStationPricing } from "@/lib/irve/pricing";
+import type { HeatmapMode } from "@/lib/irve/heatmaps";
 
 const clusterIconCache = new Map<number, L.DivIcon>();
 const pointIconCache = new Map<string, DivIcon>();
+const PRICING_MARKER_COLOR = "#3b82f6";
 
 function getClusterIcon(count: number): L.DivIcon {
   const size = count < 10 ? 36 : count < 100 ? 44 : count < 1000 ? 52 : 62;
@@ -54,14 +57,13 @@ function getPointPlugsLabel(available: number, total: number | null | undefined)
 }
 
 function getPointIcon(
-  power: number | null | undefined,
-  plugsLabel: string,
-  color: string,
+  primaryLabel: string,
+  secondaryLabel: string,
+  toneColor: string | null,
   isSelected: boolean,
   debug?: string
 ): DivIcon {
-  const powerLabel = getPointPowerLabel(power);
-  const cacheKey = `${powerLabel}|${plugsLabel}|${color}|${isSelected ? "selected" : "default"}`;
+  const cacheKey = `${primaryLabel}|${secondaryLabel}|${toneColor ?? "neutral"}|${isSelected ? "selected" : "default"}`;
   const cached = pointIconCache.get(cacheKey);
 
   if (cached) {
@@ -70,11 +72,11 @@ function getPointIcon(
 
   const icon = L.divIcon({
     html: `<div class="irve-point-card${isSelected ? " is-selected" : ""}">
-      <div class="irve-point-card__power" style="background:${color}">
-        ${powerLabel}
+      <div class="irve-point-card__power"${toneColor ? ` style="background:${toneColor}"` : ""}>
+        ${primaryLabel}
       </div>
       <div class="irve-point-card__meta">
-        ${plugsLabel}
+        ${secondaryLabel}
       </div>
       ${debug ? `<div>${debug}</div>`:``}
       <div class="irve-point-card__tip"></div>
@@ -93,6 +95,7 @@ interface ClusterLayerProps {
   clusters: IRVEClusterOrPoint[];
   supercluster: SuperclusterType<IRVEPointProperties, Record<string, never>>;
   zoom: number;
+  displayMode?: HeatmapMode;
   selectedStationId?: string | null;
   onStationSelect?: (station: IRVEPointProperties["row"]) => void;
 }
@@ -101,6 +104,7 @@ export function ClusterLayer({
   clusters,
   supercluster,
   zoom,
+  displayMode = null,
   selectedStationId,
   onStationSelect,
 }: ClusterLayerProps) {
@@ -144,20 +148,34 @@ export function ClusterLayer({
       const p = feature.properties.row;
       const isSelected = p.id_station_itinerance === selectedStationId;
       const dynamicSummary = getStationDynamicSummary(p);
+      const pricing = getStationPricing(p);
+      const pricingMarker = getPricingMarkerContent(pricing);
       const puissanceColor =
         !p.summary.max_power ? "#6b7280"
           : p.summary.max_power >= 150 ? "#ef4444"
             : p.summary.max_power >= 50 ? "#f97316"
               : p.summary.max_power >= 22 ? "#3b82f6"
                 : "#22c55e";
+      const markerContent = displayMode === "pricing"
+        ? {
+          primaryLabel: pricingMarker.topLabel,
+          secondaryLabel: pricingMarker.bottomLabel,
+          toneColor: PRICING_MARKER_COLOR,
+        }
+        : {
+          primaryLabel: getPointPowerLabel(p.summary.max_power),
+          secondaryLabel: getPointPlugsLabel(dynamicSummary.availableCount, p.nbre_pdc),
+          toneColor: puissanceColor,
+        };
+
       return (
         <Marker
           key={`point-${feature.id ?? feature.properties.id}`}
           position={[lat, lng]}
           icon={getPointIcon(
-            p.summary.max_power,
-            getPointPlugsLabel(dynamicSummary.availableCount, p.nbre_pdc),
-            puissanceColor,
+            markerContent.primaryLabel,
+            markerContent.secondaryLabel,
+            markerContent.toneColor,
             isSelected,
             // `${getPointPlugsLabel(dynamicSummary.availableCount, p.nbre_pdc)} | ${p.id_station_itinerance}`
           )}
@@ -182,7 +200,7 @@ export function ClusterLayer({
         />
       );
     });
-  }, [clusters, map, selectedStationId, supercluster, onStationSelect]);
+  }, [clusters, displayMode, map, selectedStationId, supercluster, onStationSelect]);
 
   return <>{elements}</>;
 }

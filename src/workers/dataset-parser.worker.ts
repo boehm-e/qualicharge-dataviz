@@ -7,6 +7,7 @@ import type {
   QualichargeEVSEPdc,
   QualichargeEVSEStatique,
 } from "@/types/irve";
+import { getPricingHeadline, getPricingSortValue, getStationPricing } from "@/lib/irve/pricing";
 import type {
   IRVEPointFeature,
   WorkerMessage,
@@ -213,6 +214,8 @@ function consolidateStation(pdcs: QualichargeEVSEPdc[]): QualichargeEVSEConsolid
     hasPriseTypeAutre = hasPriseTypeAutre || pdc.prise_type_autre;
   }
 
+  const pricing = getStationPricing(firstPdc);
+
   return {
     nom_amenageur: firstPdc.nom_amenageur,
     siren_amenageur: firstPdc.siren_amenageur,
@@ -255,6 +258,9 @@ function consolidateStation(pdcs: QualichargeEVSEPdc[]): QualichargeEVSEConsolid
       has_prise_type_combo_ccs: hasPriseTypeComboCcs,
       has_prise_type_chademo: hasPriseTypeChademo,
       has_prise_type_autre: hasPriseTypeAutre,
+      price_per_kwh: getPricingSortValue(pricing),
+      pricing_status: pricing.status,
+      pricing_headline: getPricingHeadline(pricing),
     },
   };
 }

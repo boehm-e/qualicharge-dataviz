@@ -171,6 +171,9 @@ export interface QualichargeEVSEStationSummary {
   has_prise_type_combo_ccs: boolean;
   has_prise_type_chademo: boolean;
   has_prise_type_autre: boolean;
+  price_per_kwh: number | null;
+  pricing_status: string | null;
+  pricing_headline: string | null;
 }
 
 export type PowerCurrentType = "ac" | "dc" | "unknown";

@@ -3,11 +3,12 @@
 import { Badge } from "@codegouvfr/react-dsfr/Badge";
 import { Card } from "@codegouvfr/react-dsfr/Card";
 import { Select } from "@codegouvfr/react-dsfr/Select";
+import { ToggleSwitch } from "@codegouvfr/react-dsfr/ToggleSwitch";
 
 import type { HeatmapDefinition, HeatmapGradientStop, HeatmapMode } from "@/lib/irve/heatmaps";
 import { MapSidePanel } from "./MapSidePanel";
 
-interface MapHeatmapPanelProps {
+interface MapAnalysisPanelProps {
   isOpen: boolean;
   onClose: () => void;
   heatmapMode: HeatmapMode;
@@ -16,9 +17,11 @@ interface MapHeatmapPanelProps {
   activeHeatmap: HeatmapDefinition | null;
   legendStops: HeatmapGradientStop[];
   activePointCount: number;
+  onlyStationsWithPrice: boolean;
+  onOnlyStationsWithPriceChange: (value: boolean) => void;
 }
 
-export function MapHeatmapPanel({
+export function MapAnalysisPanel({
   isOpen,
   onClose,
   heatmapMode,
@@ -27,7 +30,12 @@ export function MapHeatmapPanel({
   activeHeatmap,
   legendStops,
   activePointCount,
-}: MapHeatmapPanelProps) {
+  onlyStationsWithPrice,
+  onOnlyStationsWithPriceChange,
+}: MapAnalysisPanelProps) {
+  const isPricingMode = heatmapMode === "pricing";
+  const isStationMode = heatmapMode === null;
+
   return (
     <MapSidePanel
       id="map-heatmaps"
@@ -47,10 +55,12 @@ export function MapHeatmapPanel({
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span>
               {activeHeatmap
-                ? "Une heatmap colore les zones selon l'intensité de l'indicateur choisi."
+                ? isPricingMode
+                  ? "Les stations affichent leur prix extrait et peuvent etre filtrees sur les tarifs exploitables."
+                  : "Une heatmap colore les zones selon l'intensité de l'indicateur choisi."
                 : "La carte affiche les stations individuelles et leurs clusters."}
             </span>
-            <Badge severity={activeHeatmap ? "info" : "new"}>{activeHeatmap ? "Heatmap" : "Stations"}</Badge>
+            <Badge severity={activeHeatmap ? "info" : "new"}>{isPricingMode ? "Tarifs" : activeHeatmap ? "Heatmap" : "Stations"}</Badge>
           </div>
         }
       />
@@ -74,28 +84,36 @@ export function MapHeatmapPanel({
         ))}
       </Select>
 
-      <Card
-        title={activeHeatmap ? activeHeatmap.label : "Vue stations détaillées"}
-        titleAs="h3"
-        size="small"
-        border
-        desc={
-          <div className="space-y-2 text-sm text-slate-700">
-            <p className="m-0">
-              {activeHeatmap
-                ? activeHeatmap.description
-                : "Affiche les stations individuelles, les clusters et le détail station par station."}
-            </p>
-            <p className="m-0 text-xs text-slate-500">
-              {activeHeatmap
-                ? `${activePointCount} stations contribuent actuellement à cette heatmap.`
-                : "Ouvrez une station pour consulter sa fiche détaillée."}
-            </p>
-          </div>
-        }
-      />
+      {isStationMode || isPricingMode ? null : (
+        <Card
+          title={activeHeatmap ? activeHeatmap.label : "Vue stations détaillées"}
+          titleAs="h3"
+          size="small"
+          border
+          desc={
+            <div className="space-y-2 text-sm text-slate-700">
+              <p className="m-0">{activeHeatmap?.description}</p>
+              <p className="m-0 text-xs text-slate-500">
+                {`${activePointCount} stations contribuent actuellement à cette heatmap.`}
+              </p>
+            </div>
+          }
+        />
+      )}
 
-      {activeHeatmap ? (
+      {isPricingMode ? (
+        <ToggleSwitch
+          helperText="Conserve uniquement les stations pour lesquelles un prix exploitable a ete detecte."
+          inputTitle="Afficher uniquement les stations avec prix"
+          label="Stations avec prix seulement"
+          labelPosition="left"
+          showCheckedHint
+          checked={onlyStationsWithPrice}
+          onChange={onOnlyStationsWithPriceChange}
+        />
+      ) : null}
+
+      {activeHeatmap && !isPricingMode ? (
         <Card
           title="Légende couleur"
           titleAs="h3"

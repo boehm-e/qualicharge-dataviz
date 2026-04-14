@@ -7504,6 +7504,141 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
     LZ4_RAW: decompressLz4Raw
   };
 
+  // src/lib/irve/pricing.ts
+  function parseNum(str) {
+    if (!str) return void 0;
+    const num = Number.parseFloat(str.replace(",", "."));
+    return Number.isNaN(num) ? void 0 : num;
+  }
+  function extractBlockMetrics(text) {
+    const data = {};
+    const kwhMatch = text.match(/([0-9]+[.,]?[0-9]*)\s*(?:€|E|EUR)\s*(?:TTC\s*)?(?:par|[\/])\s*(?:kwh|kWh)/i);
+    if (kwhMatch) data.pricePerKwh = parseNum(kwhMatch[1]);
+    const ctsMatch = text.match(/([0-9]+[.,]?[0-9]*)\s*cts\s*\/\s*kWh/i);
+    if (ctsMatch) data.pricePerKwh = (parseNum(ctsMatch[1]) || 0) / 100;
+    if (!data.pricePerKwh && text.match(/^([0-9]+[.,]?[0-9]*)\s*€$/)) {
+      const match = text.match(/^([0-9]+[.,]?[0-9]*)\s*€$/);
+      data.pricePerKwh = parseNum(match == null ? void 0 : match[1]);
+    }
+    const idleHourMatch = text.match(/([0-9]+[.,]?[0-9]*)\s*(?:€|E|EUR)\s*(?:TTC\s*)?par\s*heure\s*(?:d'occupation|de\s*parking)/i);
+    if (idleHourMatch) data.idleFeePerHour = parseNum(idleHourMatch[1]);
+    const idle15MinMatch = text.match(/([0-9]+[.,]?[0-9]*)\s*(?:€|E|EUR)\s*(?:TTC\s*)?(?:par|[\/])\s*15\s*min/i);
+    if (idle15MinMatch && !data.idleFeePerHour) {
+      data.idleFeePerHour = (parseNum(idle15MinMatch[1]) || 0) * 4;
+    }
+    const idleMinMatch = text.match(/([0-9]+[.,]?[0-9]*)\s*(?:€|E|EUR)\s*(?:TTC\s*)?(?:par|[\/])\s*min\s*de\s*parking/i);
+    if (idleMinMatch) data.idleFeePerMin = parseNum(idleMinMatch[1]);
+    const chargeHourMatch = text.match(/([0-9]+[.,]?[0-9]*)\s*(?:€|E|EUR)\s*(?:TTC\s*)?par\s*heure\s*de\s*charge/i);
+    if (chargeHourMatch) data.chargeFeePerHour = parseNum(chargeHourMatch[1]);
+    const baseMatch = text.match(/(?:prix\s*de\s*départ\s*|cout\s*fixe.*?)([0-9]+[.,]?[0-9]*)\s*(?:€|E|EUR)|([0-9]+[.,]?[0-9]*)\s*(?:€|E|EUR)\s*(?:TTC\s*)?par\s*recharge/i);
+    if (baseMatch) {
+      data.startFee = parseNum(baseMatch[1] || baseMatch[2]);
+    }
+    return data;
+  }
+  function parseTarification(tarification, operator) {
+    var _a;
+    const rawText = (_a = tarification == null ? void 0 : tarification.trim()) != null ? _a : "";
+    const result = {
+      operator,
+      status: "STANDARD",
+      currency: "EUR",
+      originalText: rawText
+    };
+    if (rawText === "-" || rawText.toLowerCase() === "inconnu" || rawText === "") {
+      result.status = "UNKNOWN";
+      return result;
+    }
+    if (rawText.startsWith("http")) {
+      result.status = "URL_ONLY";
+      result.url = rawText;
+      return result;
+    }
+    if (rawText.toLowerCase().includes("gratuite") && !rawText.toLowerCase().includes("kwh")) {
+      result.status = "FREE";
+      return result;
+    }
+    if (operator === "IZIVIA" && rawText.includes("varier en fonction de plusieurs facteurs")) {
+      result.status = "VARIABLE";
+      return result;
+    }
+    if (rawText.includes("|")) {
+      result.status = "MULTI_PLAN";
+      result.alternativePlans = rawText.split("|").map((planText) => extractBlockMetrics(planText.trim()));
+      return result;
+    }
+    const defaultBlock = rawText.split(/entre \d{2}:\d{2} et \d{2}:\d{2}/)[0];
+    Object.assign(result, extractBlockMetrics(defaultBlock));
+    const tierRegex = /entre (\d{2}:\d{2}) et (\d{2}:\d{2}) : (.*?)(?=entre \d{2}:\d{2}|$)/g;
+    const timeTiers = [];
+    let match;
+    while ((match = tierRegex.exec(rawText)) !== null) {
+      const tierMetrics = extractBlockMetrics(match[3]);
+      timeTiers.push({
+        startTime: match[1],
+        endTime: match[2],
+        pricePerKwh: tierMetrics.pricePerKwh,
+        idleFeePerHour: tierMetrics.idleFeePerHour,
+        chargeFeePerHour: tierMetrics.chargeFeePerHour
+      });
+    }
+    if (timeTiers.length > 0) {
+      result.timeTiers = timeTiers;
+    }
+    return result;
+  }
+  function formatAmount(value, suffix) {
+    return `${value.toLocaleString("fr-FR", { minimumFractionDigits: value % 1 === 0 ? 0 : 2, maximumFractionDigits: 4 })} EUR${suffix}`;
+  }
+  function getPricingHeadline(pricing) {
+    var _a;
+    switch (pricing.status) {
+      case "FREE":
+        return "Gratuit";
+      case "UNKNOWN":
+        return null;
+      case "VARIABLE":
+        return "Tarif variable";
+      case "URL_ONLY":
+        return "Voir site";
+      case "MULTI_PLAN": {
+        const firstPlan = (_a = pricing.alternativePlans) == null ? void 0 : _a.find((plan) => typeof plan.pricePerKwh === "number");
+        if (typeof (firstPlan == null ? void 0 : firstPlan.pricePerKwh) === "number") {
+          return `Dès ${formatAmount(firstPlan.pricePerKwh, "/kWh")}`;
+        }
+        return "Multi-tarifs";
+      }
+      default:
+        if (typeof pricing.pricePerKwh === "number") {
+          return formatAmount(pricing.pricePerKwh, "/kWh");
+        }
+        if (typeof pricing.startFee === "number") {
+          return formatAmount(pricing.startFee, "/session");
+        }
+        if (typeof pricing.chargeFeePerHour === "number") {
+          return formatAmount(pricing.chargeFeePerHour, "/h charge");
+        }
+        return null;
+    }
+  }
+  function getPricingSortValue(pricing) {
+    var _a;
+    if (pricing.status === "FREE") {
+      return 0;
+    }
+    if (typeof pricing.pricePerKwh === "number") {
+      return pricing.pricePerKwh;
+    }
+    if (pricing.status === "MULTI_PLAN") {
+      const values = ((_a = pricing.alternativePlans) != null ? _a : []).map((plan) => plan.pricePerKwh).filter((value) => typeof value === "number");
+      return values.length > 0 ? Math.min(...values) : null;
+    }
+    return null;
+  }
+  function getStationPricing(station) {
+    return parseTarification(station.tarification, station.nom_operateur);
+  }
+
   // src/workers/dataset-parser.worker.ts
   var STATIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/8bb0a6e2-1016-42ba-aaee-f72f55c82e9f.parquet";
   var DYNAMIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/411443b1-6667-473f-8217-1c57c167408f.parquet";
@@ -7673,6 +7808,7 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
       hasPriseTypeChademo = hasPriseTypeChademo || pdc.prise_type_chademo;
       hasPriseTypeAutre = hasPriseTypeAutre || pdc.prise_type_autre;
     }
+    const pricing = getStationPricing(firstPdc);
     return {
       nom_amenageur: firstPdc.nom_amenageur,
       siren_amenageur: firstPdc.siren_amenageur,
@@ -7714,7 +7850,10 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
         has_prise_type_2: hasPriseType2,
         has_prise_type_combo_ccs: hasPriseTypeComboCcs,
         has_prise_type_chademo: hasPriseTypeChademo,
-        has_prise_type_autre: hasPriseTypeAutre
+        has_prise_type_autre: hasPriseTypeAutre,
+        price_per_kwh: getPricingSortValue(pricing),
+        pricing_status: pricing.status,
+        pricing_headline: getPricingHeadline(pricing)
       }
     };
   }

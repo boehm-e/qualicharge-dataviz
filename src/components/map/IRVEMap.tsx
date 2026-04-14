@@ -2,10 +2,10 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
-import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import type { Map as LeafletMap } from "leaflet";
 import { Badge } from "@codegouvfr/react-dsfr/Badge";
 import { Button } from "@codegouvfr/react-dsfr/Button";
+import { Select } from "@codegouvfr/react-dsfr/Select";
 
 import { useIRVEData } from "@/hooks/useIRVEData";
 import { useMapClusters } from "@/hooks/useMapClusters";
@@ -25,7 +25,7 @@ import {
 import { ClusterLayer } from "./ClusterLayer";
 import { HeatmapLayer } from "./HeatmapLayer";
 import { LoadingOverlay } from "./LoadingOverlay";
-import { MapHeatmapPanel } from "./MapHeatmapPanel";
+import { MapAnalysisPanel } from "./MapAnalysisPanel";
 import { MapEvents } from "./MapEvents";
 import { MapFiltersPanel } from "./MapFiltersPanel";
 import { StationDetailsPanel } from "./StationDetailsPanel";
@@ -44,10 +44,24 @@ export default function IRVEMap() {
   const [isHeatmapPanelOpen, setIsHeatmapPanelOpen] = useState(false);
   const [selectedStation, setSelectedStation] = useState<QualichargeEVSEConsolidated | null>(null);
   const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>(null);
+  const [onlyStationsWithPrice, setOnlyStationsWithPrice] = useState(true);
+
+  const mapModeSelectValue = heatmapMode ?? "markers";
 
   const filteredPoints = useMemo(() => {
-    return points.filter((point) => matchesStationFilters(point.properties.row, filters));
-  }, [filters, points]);
+    return points.filter((point) => {
+      const matchesFilters = matchesStationFilters(point.properties.row, filters);
+      if (!matchesFilters) {
+        return false;
+      }
+
+      if (heatmapMode === "pricing" && onlyStationsWithPrice) {
+        return point.properties.row.summary.price_per_kwh !== null;
+      }
+
+      return true;
+    });
+  }, [filters, heatmapMode, onlyStationsWithPrice, points]);
 
   const { clusters, supercluster, mapRef, zoom, updateView } = useMapClusters(filteredPoints);
 
@@ -100,39 +114,66 @@ export default function IRVEMap() {
 
   return (
     <div className="irve-map-wrapper">
-      <div className="absolute top-3 right-3 z-[1000] flex items-center gap-2 bg-white p-1.5">
-        <Button
-          priority={isFiltersOpen ? "primary" : "secondary"}
-          size="small"
-          iconId="fr-icon-filter-line"
-          onClick={() => {
-            if (isFiltersOpen === false) setIsHeatmapPanelOpen(false);
-            setIsFiltersOpen((open) => !open)
-          }}
-        >
-          Filtres
-        </Button>
-        <Button
-          priority={isHeatmapPanelOpen ? "primary" : "secondary"}
-          size="small"
-          iconId="fr-icon-line-chart-line"
-          onClick={() => {
-            if (isHeatmapPanelOpen === false) setIsFiltersOpen(false);
-            setIsHeatmapPanelOpen((open) => !open)
-          }}
-        >
-          Analyse
-        </Button>
+      <div className="absolute top-3 right-3 z-[1000] flex items-center gap-2 flex flex-col">
 
-        <Badge severity="new">{uniqueStationCount} stations</Badge>
-        {activeFilterCount > 0 && (
-          <Badge severity="info">
-            {activeFilterCount} filtre{activeFilterCount > 1 ? "s" : ""}
-          </Badge>
-        )}
+
+        <div className="flex bg-white">
+          <Button
+            priority={isFiltersOpen ? "primary" : "secondary"}
+            size="small"
+            iconId="fr-icon-filter-line"
+            onClick={() => {
+              if (isFiltersOpen === false) setIsHeatmapPanelOpen(false);
+              setIsFiltersOpen((open) => !open)
+            }}
+          >
+            Filtres
+          </Button>
+          <Badge severity="new">{uniqueStationCount} stations</Badge>
+          {activeFilterCount > 0 && (
+            <Badge severity="info">
+              {activeFilterCount} filtre{activeFilterCount > 1 ? "s" : ""}
+            </Badge>
+          )}
+        </div>
+
+
+        <div className="flex bg-white">
+          <Select
+            label={<div className="flex items-center justify-between pl-3">
+              <p className="m-0! text-md"><b>Type de vue</b></p>
+              <Button
+                priority={isHeatmapPanelOpen ? "primary" : "tertiary no outline"}
+                size="small"
+                iconId="fr-icon-information-line"
+                title="Informations sur la vue courante"
+                onClick={() => {
+                  if (isHeatmapPanelOpen === false) setIsFiltersOpen(false);
+                  setIsHeatmapPanelOpen((open) => !open)
+                }}
+              />
+            </div>}
+            nativeSelectProps={{
+              value: mapModeSelectValue,
+              className:"mt-0!",
+              onChange: (event) => {
+                const nextValue = event.target.value;
+                setHeatmapMode(nextValue === "markers" ? null : (nextValue as Exclude<HeatmapMode, null>));
+              },
+            }}
+          >
+            <option value="markers">Vue stations detaillees</option>
+            {SERVICE_HEATMAPS.map((mode) => (
+              <option key={mode.value} value={mode.value}>
+                {mode.shortLabel}
+              </option>
+            ))}
+          </Select>
+        </div>
+
       </div>
 
-      <MapHeatmapPanel
+      <MapAnalysisPanel
         isOpen={isHeatmapPanelOpen}
         onClose={() => setIsHeatmapPanelOpen(false)}
         heatmapMode={heatmapMode}
@@ -141,6 +182,8 @@ export default function IRVEMap() {
         activeHeatmap={activeHeatmap}
         legendStops={heatmapConfig.stops}
         activePointCount={heatmapConfig.points.length}
+        onlyStationsWithPrice={onlyStationsWithPrice}
+        onOnlyStationsWithPriceChange={setOnlyStationsWithPrice}
       />
 
       <MapFiltersPanel
@@ -236,11 +279,12 @@ export default function IRVEMap() {
 
         <MapEvents onViewChange={updateView} onMapReady={handleMapReady} />
 
-        {heatmapMode === null ? (
+        {heatmapMode === null || heatmapMode === "pricing" ? (
           <ClusterLayer
             clusters={clusters}
             supercluster={supercluster}
             zoom={zoom}
+            displayMode={heatmapMode}
             selectedStationId={visibleSelectedStation?.id_station_itinerance ?? null}
             onStationSelect={setSelectedStation}
           />

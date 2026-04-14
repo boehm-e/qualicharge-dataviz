@@ -13,6 +13,7 @@ import { StationAccessTab } from "./tabs/StationAccessTab";
 import { StationConnectorsTab } from "./tabs/StationConnectorsTab";
 import { StationDetailsTab } from "./tabs/StationDetailsTab";
 import { StationEssentialTab } from "./tabs/StationEssentialTab";
+import { StationPricingTab } from "./tabs/StationPricingTab";
 import { getConnectorStatusItems, type StationTabId } from "./tabs/shared";
 
 export interface StationDetailsPanelProps {
@@ -47,10 +48,11 @@ export function StationDetailsPanel({ station, isOpen, onClose }: StationDetails
       essentiel: <StationEssentialTab station={station} copiedKey={copiedKey} copy={copy} />,
       connecteurs: <StationConnectorsTab station={station} connectorStatusItems={connectorStatusItems} />,
       acces: <StationAccessTab station={station} paymentTags={paymentTags} />,
+      tarification: <StationPricingTab station={station} />,
       details: <StationDetailsTab station={station} sections={sections} copiedKey={copiedKey} copy={copy} />,
     }
     :
-    { essentiel: null, connecteurs: null, acces: null, details: null };
+    { essentiel: null, connecteurs: null, acces: null, tarification: null, details: null };
 
   return (
     <MapSidePanel
@@ -74,9 +76,10 @@ export function StationDetailsPanel({ station, isOpen, onClose }: StationDetails
           tabs={[
             { tabId: "essentiel", label: "Essentiel", iconId: "fr-icon-information-line" },
              { tabId: "connecteurs", label: "Prises", iconId: "fr-icon-flashlight-line" },
-            { tabId: "acces", label: "Services", iconId: "fr-icon-user-line" },
-            { tabId: "details", label: "Détails", iconId: "fr-icon-list-unordered" },
-          ]}
+             { tabId: "acces", label: "Services", iconId: "fr-icon-user-line" },
+             { tabId: "tarification", label: "Tarifs", iconId: "fr-icon-money-euro-circle-line" },
+             { tabId: "details", label: "Détails", iconId: "fr-icon-list-unordered" },
+           ]}
         >
           {tabComponents[selectedTabId]}
         </Tabs>

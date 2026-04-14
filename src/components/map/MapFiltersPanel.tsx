@@ -206,7 +206,7 @@ export function MapFiltersPanel({
       subtitle="Affinez les stations visibles sur la carte et dans les clusters."
     >
       <Card
-        title="Resultats visibles"
+        title="Résultats visibles"
         titleAs="h3"
         size="small"
         border
@@ -228,7 +228,7 @@ export function MapFiltersPanel({
                 disabled={activeCount === 0}
                 onClick={onReset}
               >
-                  Reinitialiser
+                Reinitialiser
               </Button>
             </div>
           </div>
@@ -236,7 +236,7 @@ export function MapFiltersPanel({
       />
 
       <Card
-        title="Recherche ciblee"
+        title="Recherche ciblée"
         titleAs="h3"
         size="small"
         border
@@ -279,14 +279,14 @@ export function MapFiltersPanel({
             },
           },
           {
-             label: "Acces libre",
+            label: "Acces libre",
             nativeInputProps: {
               checked: filters.access === "free",
               onChange: () => onAccessChange("free"),
             },
           },
           {
-              label: "Acces reserve",
+            label: "Acces reserve",
             nativeInputProps: {
               checked: filters.access === "restricted",
               onChange: () => onAccessChange("restricted"),
@@ -295,57 +295,55 @@ export function MapFiltersPanel({
         ]}
       />
 
-      <div className="flex flex-col">
+      <FilterAccordionSection label="Puissance">
+        <FilterCheckboxGroup
+          legend="Puissance de recharge"
+          options={POWER_FILTER_OPTIONS.map((option) => ({
+            checked: filters.power.includes(option.id),
+            hintText: option.description,
+            label: option.label,
+            onChange: () => onTogglePower(option.id),
+          }))}
+        />
+      </FilterAccordionSection>
 
-        <FilterAccordionSection label="Puissance">
-          <FilterCheckboxGroup
-            legend="Puissance de recharge"
-            options={POWER_FILTER_OPTIONS.map((option) => ({
-              checked: filters.power.includes(option.id),
-              hintText: option.description,
-              label: option.label,
-              onChange: () => onTogglePower(option.id),
-            }))}
-          />
-        </FilterAccordionSection>
+      <FilterAccordionSection label="Connecteurs">
+        <FilterCheckboxGroup
+          legend="Connecteurs disponiblés"
+          options={CONNECTOR_FILTER_OPTIONS.map((option) => ({
+            checked: filters.connectors.includes(option.id),
+            label: option.label,
+            onChange: () => onToggleConnector(option.id),
+          }))}
+        />
+      </FilterAccordionSection>
 
-        <FilterAccordionSection label="Connecteurs">
-          <FilterCheckboxGroup
-            legend="Connecteurs disponibles"
-            options={CONNECTOR_FILTER_OPTIONS.map((option) => ({
-              checked: filters.connectors.includes(option.id),
-              label: option.label,
-              onChange: () => onToggleConnector(option.id),
-            }))}
-          />
-        </FilterAccordionSection>
+      <FilterAccordionSection label="Paiement">
+        <FilterCheckboxGroup
+          legend="Moyens de paiement"
+          options={PAYMENT_FILTER_OPTIONS.map((option) => ({
+            checked: filters.payment.includes(option.id),
+            label: option.label,
+            onChange: () => onTogglePayment(option.id),
+          }))}
+        />
+      </FilterAccordionSection>
 
-        <FilterAccordionSection label="Paiement">
-          <FilterCheckboxGroup
-            legend="Moyens de paiement"
-            options={PAYMENT_FILTER_OPTIONS.map((option) => ({
-              checked: filters.payment.includes(option.id),
-              label: option.label,
-              onChange: () => onTogglePayment(option.id),
-            }))}
-          />
-        </FilterAccordionSection>
-
-        <FilterAccordionSection label="Services et accessibilite">
-          <div className="irve-filters-panel__toggles">
-            {serviceToggles.map((toggle) => (
-              <ToggleSwitch
-                key={toggle.label}
-                checked={toggle.checked}
-                label={toggle.label}
-                helperText={toggle.helperText}
-                showCheckedHint={false}
-                onChange={toggle.onChange}
-              />
-            ))}
-          </div>
-        </FilterAccordionSection>
-      </div>
+      <FilterAccordionSection label="Services et accessibilité">
+        <div className="irve-filters-panel__toggles">
+          {serviceToggles.map((toggle) => (
+            <ToggleSwitch
+              labelPosition="left"
+              key={toggle.label}
+              checked={toggle.checked}
+              label={toggle.label}
+              helperText={toggle.helperText}
+              showCheckedHint={false}
+              onChange={toggle.onChange}
+            />
+          ))}
+        </div>
+      </FilterAccordionSection>
 
     </MapSidePanel>
   );

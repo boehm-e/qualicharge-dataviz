@@ -5,15 +5,17 @@ import { Card } from "@codegouvfr/react-dsfr/Card";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { ToggleSwitch } from "@codegouvfr/react-dsfr/ToggleSwitch";
 
-import type { HeatmapDefinition, HeatmapGradientStop, HeatmapMode } from "@/lib/irve/heatmaps";
+import type { HeatmapDefinition, HeatmapGradientStop } from "@/lib/irve/heatmaps";
+import type { MapDisplayMode, MapModeDefinition } from "@/lib/irve/mapModes";
 import { MapSidePanel } from "./MapSidePanel";
 
 interface MapAnalysisPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  heatmapMode: HeatmapMode;
-  onModeChange: (mode: HeatmapMode) => void;
-  heatmaps: HeatmapDefinition[];
+  mode: MapDisplayMode;
+  onModeChange: (mode: MapDisplayMode) => void;
+  modes: MapModeDefinition[];
+  activeMode: MapModeDefinition;
   activeHeatmap: HeatmapDefinition | null;
   legendStops: HeatmapGradientStop[];
   activePointCount: number;
@@ -24,17 +26,18 @@ interface MapAnalysisPanelProps {
 export function MapAnalysisPanel({
   isOpen,
   onClose,
-  heatmapMode,
+  mode,
   onModeChange,
-  heatmaps,
+  modes,
+  activeMode,
   activeHeatmap,
   legendStops,
   activePointCount,
   onlyStationsWithPrice,
   onOnlyStationsWithPriceChange,
 }: MapAnalysisPanelProps) {
-  const isPricingMode = heatmapMode === "pricing";
-  const isStationMode = heatmapMode === null;
+  const isPricingMode = mode === "pricing";
+  const isStationMode = mode === "markers";
 
   return (
     <MapSidePanel
@@ -54,13 +57,13 @@ export function MapAnalysisPanel({
         desc={
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span>
-              {activeHeatmap
-                ? isPricingMode
-                  ? "Les stations affichent leur prix extrait et peuvent etre filtrees sur les tarifs exploitables."
-                  : "Une heatmap colore les zones selon l'intensité de l'indicateur choisi."
-                : "La carte affiche les stations individuelles et leurs clusters."}
+              {activeMode.kind === "heatmap"
+                ? "Une heatmap colore les zones selon l'intensité de l'indicateur choisi."
+                : activeMode.description}
             </span>
-            <Badge severity={activeHeatmap ? "info" : "new"}>{isPricingMode ? "Tarifs" : activeHeatmap ? "Heatmap" : "Stations"}</Badge>
+            <Badge severity={activeMode.kind === "heatmap" ? "info" : "new"}>
+              {activeMode.kind === "heatmap" ? "Heatmap" : isPricingMode ? "Tarifs" : "Stations"}
+            </Badge>
           </div>
         }
       />
@@ -69,30 +72,28 @@ export function MapAnalysisPanel({
         label="Vue thématique"
         hint="Chaque vue mesure un aspect différent de la qualité de service."
         nativeSelectProps={{
-          value: heatmapMode ?? "markers",
+          value: mode,
           onChange: (event) => {
-            const nextValue = event.target.value;
-            onModeChange(nextValue === "markers" ? null : (nextValue as Exclude<HeatmapMode, null>));
+            onModeChange(event.target.value as MapDisplayMode);
           },
         }}
       >
-        <option value="markers">Vue stations détaillées</option>
-        {heatmaps.map((heatmap) => (
-          <option key={heatmap.value} value={heatmap.value}>
-            {heatmap.shortLabel}
+        {modes.map((viewMode) => (
+          <option key={viewMode.value} value={viewMode.value}>
+            {viewMode.shortLabel}
           </option>
         ))}
       </Select>
 
       {isStationMode || isPricingMode ? null : (
         <Card
-          title={activeHeatmap ? activeHeatmap.label : "Vue stations détaillées"}
+          title={activeMode.label}
           titleAs="h3"
           size="small"
           border
           desc={
             <div className="space-y-2 text-sm text-slate-700">
-              <p className="m-0">{activeHeatmap?.description}</p>
+              <p className="m-0">{activeMode.description}</p>
               <p className="m-0 text-xs text-slate-500">
                 {`${activePointCount} stations contribuent actuellement à cette heatmap.`}
               </p>

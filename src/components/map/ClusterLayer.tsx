@@ -9,8 +9,8 @@ import type SuperclusterType from "supercluster";
 import type { IRVEClusterOrPoint, IRVEPointProperties } from "@/types/irve-runtime";
 import { isClusterFeature } from "@/hooks/useMapClusters";
 import { getStationDynamicSummary } from "@/lib/irve/formatters";
+import type { MarkerDisplayMode } from "@/lib/irve/mapModes";
 import { getPricingMarkerContent, getStationPricing } from "@/lib/irve/pricing";
-import type { HeatmapMode } from "@/lib/irve/heatmaps";
 
 const clusterIconCache = new Map<number, L.DivIcon>();
 const pointIconCache = new Map<string, DivIcon>();
@@ -95,7 +95,7 @@ interface ClusterLayerProps {
   clusters: IRVEClusterOrPoint[];
   supercluster: SuperclusterType<IRVEPointProperties, Record<string, never>>;
   zoom: number;
-  displayMode?: HeatmapMode;
+  displayMode?: MarkerDisplayMode;
   selectedStationId?: string | null;
   onStationSelect?: (station: IRVEPointProperties["row"]) => void;
 }
@@ -104,7 +104,7 @@ export function ClusterLayer({
   clusters,
   supercluster,
   zoom,
-  displayMode = null,
+  displayMode = "markers",
   selectedStationId,
   onStationSelect,
 }: ClusterLayerProps) {

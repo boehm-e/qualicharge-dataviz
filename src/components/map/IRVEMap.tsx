@@ -15,6 +15,11 @@ import {
   SERVICE_HEATMAPS,
   type HeatmapMode,
 } from "@/lib/irve/heatmaps";
+import {
+  buildMapModes,
+  isHeatmapDisplayMode,
+  type MapDisplayMode,
+} from "@/lib/irve/mapModes";
 import type { QualichargeEVSEConsolidated } from "@/types/irve";
 import {
   DEFAULT_MAP_FILTERS,
@@ -43,10 +48,15 @@ export default function IRVEMap() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isHeatmapPanelOpen, setIsHeatmapPanelOpen] = useState(false);
   const [selectedStation, setSelectedStation] = useState<QualichargeEVSEConsolidated | null>(null);
-  const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>(null);
+  const [mode, setMode] = useState<MapDisplayMode>("markers");
   const [onlyStationsWithPrice, setOnlyStationsWithPrice] = useState(true);
 
-  const mapModeSelectValue = heatmapMode ?? "markers";
+  const mapModes = useMemo(() => buildMapModes(SERVICE_HEATMAPS), []);
+  const activeMode = useMemo(
+    () => mapModes.find((entry) => entry.value === mode) ?? mapModes[0],
+    [mapModes, mode]
+  );
+  const activeHeatmapMode = isHeatmapDisplayMode(mode) ? mode : null;
 
   const filteredPoints = useMemo(() => {
     return points.filter((point) => {
@@ -55,13 +65,13 @@ export default function IRVEMap() {
         return false;
       }
 
-      if (heatmapMode === "pricing" && onlyStationsWithPrice) {
+      if (mode === "pricing" && onlyStationsWithPrice) {
         return point.properties.row.summary.price_per_kwh !== null;
       }
 
       return true;
     });
-  }, [filters, heatmapMode, onlyStationsWithPrice, points]);
+  }, [filters, mode, onlyStationsWithPrice, points]);
 
   const { clusters, supercluster, mapRef, zoom, updateView } = useMapClusters(filteredPoints);
 
@@ -80,7 +90,10 @@ export default function IRVEMap() {
   }, [filteredStations]);
   const activeFilterCount = useMemo(() => getActiveFilterCount(filters), [filters]);
   const filteredPointCount = filteredPoints.length;
-  const activeHeatmap = useMemo(() => getHeatmapDefinition(heatmapMode), [heatmapMode]);
+  const activeHeatmap = useMemo(
+    () => (activeHeatmapMode ? getHeatmapDefinition(activeHeatmapMode as HeatmapMode) : null),
+    [activeHeatmapMode]
+  );
   const heatmapConfig = useMemo(() => buildHeatmapConfig(filteredStations, activeHeatmap), [activeHeatmap, filteredStations]);
   const visibleSelectedStation = useMemo(() => {
     if (!selectedStation) {
@@ -154,18 +167,16 @@ export default function IRVEMap() {
               />
             </div>}
             nativeSelectProps={{
-              value: mapModeSelectValue,
+              value: mode,
               className:"mt-0!",
               onChange: (event) => {
-                const nextValue = event.target.value;
-                setHeatmapMode(nextValue === "markers" ? null : (nextValue as Exclude<HeatmapMode, null>));
+                setMode(event.target.value as MapDisplayMode);
               },
             }}
           >
-            <option value="markers">Vue stations detaillees</option>
-            {SERVICE_HEATMAPS.map((mode) => (
-              <option key={mode.value} value={mode.value}>
-                {mode.shortLabel}
+            {mapModes.map((mapMode) => (
+              <option key={mapMode.value} value={mapMode.value}>
+                {mapMode.shortLabel}
               </option>
             ))}
           </Select>
@@ -176,9 +187,10 @@ export default function IRVEMap() {
       <MapAnalysisPanel
         isOpen={isHeatmapPanelOpen}
         onClose={() => setIsHeatmapPanelOpen(false)}
-        heatmapMode={heatmapMode}
-        onModeChange={setHeatmapMode}
-        heatmaps={SERVICE_HEATMAPS}
+        mode={mode}
+        onModeChange={setMode}
+        modes={mapModes}
+        activeMode={activeMode}
         activeHeatmap={activeHeatmap}
         legendStops={heatmapConfig.stops}
         activePointCount={heatmapConfig.points.length}
@@ -279,12 +291,12 @@ export default function IRVEMap() {
 
         <MapEvents onViewChange={updateView} onMapReady={handleMapReady} />
 
-        {heatmapMode === null || heatmapMode === "pricing" ? (
+        {activeMode.kind === "markers" ? (
           <ClusterLayer
             clusters={clusters}
             supercluster={supercluster}
             zoom={zoom}
-            displayMode={heatmapMode}
+            displayMode={mode === "pricing" ? "pricing" : "markers"}
             selectedStationId={visibleSelectedStation?.id_station_itinerance ?? null}
             onStationSelect={setSelectedStation}
           />

@@ -17,12 +17,13 @@ export interface HeatmapPoint {
   intensity: number;
 }
 
-export type HeatmapMode = "plugCount" | "availabilityRatio" | "outOfService" | "serviceCoverage" | "pricing" | null;
+export type HeatmapMode = "plugCount" | "availabilityRatio" | "outOfService" | "serviceCoverage";
 
 export interface HeatmapDefinition {
   value: Exclude<HeatmapMode, null>;
   label: string;
   shortLabel: string;
+  order: number;
   description: string;
   legendTitle: string;
   emptyMessage: string;
@@ -85,6 +86,7 @@ export const SERVICE_HEATMAPS: HeatmapDefinitionWithMetric[] = [
     value: "availabilityRatio",
     label: "Disponibilité réelle des points de charge",
     shortLabel: "Disponibilité réelle",
+    order: 20,
     description:
       "Montre les zones où la part de points de charge libres et fonctionnels est la plus forte.",
     legendTitle: "Part des points libres et fonctionnels",
@@ -113,6 +115,7 @@ export const SERVICE_HEATMAPS: HeatmapDefinitionWithMetric[] = [
     value: "outOfService",
     label: "Pannes et indisponibilités",
     shortLabel: "Pannes et indisponibilités",
+    order: 30,
     description:
       "Repère les zones où les points de charge hors service ou non fonctionnels sont les plus nombreux.",
     legendTitle: "Nombre de points en panne ou indisponibles",
@@ -132,6 +135,7 @@ export const SERVICE_HEATMAPS: HeatmapDefinitionWithMetric[] = [
     value: "serviceCoverage",
     label: "Couverture de service exploitable",
     shortLabel: "Couverture exploitable",
+    order: 40,
     description:
       "Met en avant les zones qui cumulent le plus de points de charge actuellement libres et fonctionnels.",
     legendTitle: "Nombre de points libres et fonctionnels",
@@ -145,32 +149,10 @@ export const SERVICE_HEATMAPS: HeatmapDefinitionWithMetric[] = [
     getStops: (maxIntensity) => buildCountStops(maxIntensity, "point disponible", "points disponibles"),
   },
   {
-    value: "pricing",
-    label: "Tarification actuelle des stations",
-    shortLabel: "Tarification",
-    description:
-      "Compare les stations selon le tarif extrait du champ de tarification, quand un prix par kWh exploitable est disponible.",
-    legendTitle: "Prix estime par kWh",
-    emptyMessage: "Aucune tarification exploitable n'a pu etre extraite dans la selection courante.",
-    radius: 30,
-    blur: 22,
-    getIntensity: (station) => station.summary.price_per_kwh,
-    getStops: (maxIntensity) => {
-      const safeMax = Math.max(maxIntensity, 0.1);
-      const values = [0, 0.25, 0.5, 0.75, 1].map((ratio) => Number((safeMax * ratio).toFixed(2)));
-      const colors = Object.values(DEFAULT_HEATMAP_GRADIENT);
-
-      return values.map((value, index) => ({
-        value,
-        color: colors[index],
-        label: `${value.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} EUR/kWh`,
-      }));
-    },
-  },
-  {
     value: "plugCount",
     label: "Capacité totale du réseau",
     shortLabel: "Capacité totale",
+    order: 50,
     description:
       "Visualise les territoires qui concentrent le plus grand nombre de points de charge, sans tenir compte de leur état.",
     legendTitle: "Nombre total de points de charge",

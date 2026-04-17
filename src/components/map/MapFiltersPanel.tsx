@@ -20,6 +20,8 @@ import { MapSidePanel } from "./MapSidePanel";
 
 interface MapFiltersPanelProps {
   filters: MapFiltersState;
+  itineranceInputValue: string;
+  operatorInputValue: string;
   isOpen: boolean;
   activeCount: number;
   stationCount: number;
@@ -123,6 +125,8 @@ function FilterAccordionSection({
 
 export function MapFiltersPanel({
   filters,
+  itineranceInputValue,
+  operatorInputValue,
   isOpen,
   activeCount,
   stationCount,
@@ -139,21 +143,6 @@ export function MapFiltersPanel({
   onTogglePmr,
   onToggleTwoWheels,
 }: MapFiltersPanelProps) {
-  const itineranceTimeoutRef = useRef<number | null>(null);
-  const operatorTimeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (itineranceTimeoutRef.current !== null) {
-        window.clearTimeout(itineranceTimeoutRef.current);
-      }
-
-      if (operatorTimeoutRef.current !== null) {
-        window.clearTimeout(operatorTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const serviceToggles = [
     {
       checked: filters.reservationOnly,
@@ -227,19 +216,10 @@ export function MapFiltersPanel({
               hintText="Recherche sur `id_station_itinerance` et `id_pdc_itinerance`. Une saisie partielle fonctionne, par exemple les 5 premiers caracteres de l'unite d'exploitation."
                 nativeInputProps={{
                   type: "search",
-                  value: filters.itineranceQuery,
+                  value: itineranceInputValue,
                   placeholder: "Ex. FRTSLP29984",
                   onChange: (event) => {
-                    const nextValue = event.currentTarget.value;
-
-                    if (itineranceTimeoutRef.current !== null) {
-                      window.clearTimeout(itineranceTimeoutRef.current);
-                    }
-
-                    itineranceTimeoutRef.current = window.setTimeout(() => {
-                      onItineranceQueryChange(nextValue.trim());
-                      itineranceTimeoutRef.current = null;
-                    }, 250);
+                    onItineranceQueryChange(event.currentTarget.value);
                   },
                 }}
               />
@@ -249,19 +229,10 @@ export function MapFiltersPanel({
               hintText="Recherche libre sur les noms d'operateur et d'amenageur. Exemple : Tesla."
                 nativeInputProps={{
                   type: "search",
-                  value: filters.operatorQuery,
+                  value: operatorInputValue,
                   placeholder: "Ex. Tesla, Izivia, Electra",
                   onChange: (event) => {
-                    const nextValue = event.currentTarget.value;
-
-                    if (operatorTimeoutRef.current !== null) {
-                      window.clearTimeout(operatorTimeoutRef.current);
-                    }
-
-                    operatorTimeoutRef.current = window.setTimeout(() => {
-                      onOperatorQueryChange(nextValue.trim());
-                      operatorTimeoutRef.current = null;
-                    }, 250);
+                    onOperatorQueryChange(event.currentTarget.value);
                   },
                 }}
               />

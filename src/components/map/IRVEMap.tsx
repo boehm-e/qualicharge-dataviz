@@ -1,16 +1,13 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { MapContainer, TileLayer } from "react-leaflet";
-import type { Map as LeafletMap } from "leaflet";
+import { useMemo, useState } from "react";
 import { Badge } from "@codegouvfr/react-dsfr/Badge";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 
+import { useMapFiltersState } from "@/hooks/useMapFiltersState";
 import { useIRVEData } from "@/hooks/useIRVEData";
-import { useMapClusters } from "@/hooks/useMapClusters";
 import {
-  buildHeatmapConfig,
   getHeatmapDefinition,
   SERVICE_HEATMAPS,
   type HeatmapMode,
@@ -21,35 +18,40 @@ import {
   type MapDisplayMode,
 } from "@/lib/irve/mapModes";
 import type { QualichargeEVSEConsolidated } from "@/types/irve";
-import {
-  DEFAULT_MAP_FILTERS,
-  getActiveFilterCount,
-  matchesStationFilters,
-  type MapFiltersState,
-} from "@/lib/irve/mapFilters";
-import { ClusterLayer } from "./ClusterLayer";
-import { HeatmapLayer } from "./HeatmapLayer";
+import { matchesStationFilters } from "@/lib/irve/mapFilters";
 import { LoadingOverlay } from "./LoadingOverlay";
 import { MapAnalysisPanel } from "./MapAnalysisPanel";
-import { MapEvents } from "./MapEvents";
 import { MapFiltersPanel } from "./MapFiltersPanel";
+import { MapViewport } from "./MapViewport";
 import { StationDetailsPanel } from "./StationDetailsPanel";
 
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-defaulticon-compatibility";
 
-const FRANCE_CENTER: [number, number] = [46.6, 2.3];
-const INITIAL_ZOOM = 6;
-
 export default function IRVEMap() {
   const { points, loadState } = useIRVEData();
-  const [filters, setFilters] = useState<MapFiltersState>(DEFAULT_MAP_FILTERS);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isHeatmapPanelOpen, setIsHeatmapPanelOpen] = useState(false);
   const [selectedStation, setSelectedStation] = useState<QualichargeEVSEConsolidated | null>(null);
   const [mode, setMode] = useState<MapDisplayMode>("markers");
   const [onlyStationsWithPrice, setOnlyStationsWithPrice] = useState(true);
+  const {
+    filters,
+    itineranceInputValue,
+    operatorInputValue,
+    activeFilterCount,
+    setItineranceInputValue,
+    setOperatorInputValue,
+    resetFilters,
+    setAccess,
+    togglePower,
+    toggleConnector,
+    togglePayment,
+    toggleReservation,
+    togglePmr,
+    toggleTwoWheels,
+  } = useMapFiltersState();
 
   const mapModes = useMemo(() => buildMapModes(SERVICE_HEATMAPS), []);
   const activeMode = useMemo(
@@ -73,8 +75,6 @@ export default function IRVEMap() {
     });
   }, [filters, mode, onlyStationsWithPrice, points]);
 
-  const { clusters, supercluster, mapRef, zoom, updateView } = useMapClusters(filteredPoints);
-
   const filteredStations = useMemo(
     () => filteredPoints.map((point) => point.properties.row),
     [filteredPoints]
@@ -86,15 +86,13 @@ export default function IRVEMap() {
       stationIds.add(station.id_station_itinerance || station.adresse_station);
     }
 
-    return stationIds.size;
+      return stationIds.size;
   }, [filteredStations]);
-  const activeFilterCount = useMemo(() => getActiveFilterCount(filters), [filters]);
   const filteredPointCount = filteredPoints.length;
   const activeHeatmap = useMemo(
     () => (activeHeatmapMode ? getHeatmapDefinition(activeHeatmapMode as HeatmapMode) : null),
     [activeHeatmapMode]
   );
-  const heatmapConfig = useMemo(() => buildHeatmapConfig(filteredStations, activeHeatmap), [activeHeatmap, filteredStations]);
   const visibleSelectedStation = useMemo(() => {
     if (!selectedStation) {
       return null;
@@ -107,23 +105,6 @@ export default function IRVEMap() {
       : null;
   }, [filteredPoints, selectedStation]);
   const hasOpenPanel = isFiltersOpen || isHeatmapPanelOpen || visibleSelectedStation !== null;
-  const zoomPanelOffsetClass = hasOpenPanel
-    ? "md:left-[calc(var(--irve-map-panel-width)+1.5rem)]"
-    : "md:left-4";
-
-  const handleMapReady = useCallback(
-    (map: LeafletMap) => {
-      mapRef.current = map;
-      updateView();
-    },
-    [mapRef, updateView]
-  );
-
-  const toggleListValue = useCallback(<T extends string>(items: T[], value: T) => {
-    return items.includes(value)
-      ? items.filter((item) => item !== value)
-      : [...items, value];
-  }, []);
 
   return (
     <div className="irve-map-wrapper">
@@ -192,123 +173,40 @@ export default function IRVEMap() {
         modes={mapModes}
         activeMode={activeMode}
         activeHeatmap={activeHeatmap}
-        legendStops={heatmapConfig.stops}
-        activePointCount={heatmapConfig.points.length}
+        legendStops={activeHeatmap ? activeHeatmap.getStops(1) : []}
+        activePointCount={filteredStations.length}
         onlyStationsWithPrice={onlyStationsWithPrice}
         onOnlyStationsWithPriceChange={setOnlyStationsWithPrice}
       />
 
       <MapFiltersPanel
         filters={filters}
+        itineranceInputValue={itineranceInputValue}
+        operatorInputValue={operatorInputValue}
         isOpen={isFiltersOpen}
         activeCount={activeFilterCount}
         stationCount={uniqueStationCount}
         pointCount={filteredPointCount}
         onClose={() => setIsFiltersOpen(false)}
-        onReset={() => setFilters(DEFAULT_MAP_FILTERS)}
-        onAccessChange={(access) => setFilters((current) => ({ ...current, access }))}
-        onTogglePower={(value) =>
-          setFilters((current) => ({
-            ...current,
-            power: toggleListValue(current.power, value),
-          }))
-        }
-        onToggleConnector={(value) =>
-          setFilters((current) => ({
-            ...current,
-            connectors: toggleListValue(current.connectors, value),
-          }))
-        }
-        onTogglePayment={(value) =>
-          setFilters((current) => ({
-            ...current,
-            payment: toggleListValue(current.payment, value),
-          }))
-        }
-        onItineranceQueryChange={(itineranceQuery) =>
-          setFilters((current) =>
-            current.itineranceQuery === itineranceQuery
-              ? current
-              : { ...current, itineranceQuery }
-          )
-        }
-        onOperatorQueryChange={(operatorQuery) =>
-          setFilters((current) =>
-            current.operatorQuery === operatorQuery
-              ? current
-              : { ...current, operatorQuery }
-          )
-        }
-        onToggleReservation={() =>
-          setFilters((current) => ({ ...current, reservationOnly: !current.reservationOnly }))
-        }
-        onTogglePmr={() =>
-          setFilters((current) => ({ ...current, pmrOnly: !current.pmrOnly }))
-        }
-        onToggleTwoWheels={() =>
-          setFilters((current) => ({ ...current, twoWheelsOnly: !current.twoWheelsOnly }))
-        }
+        onReset={resetFilters}
+        onAccessChange={setAccess}
+        onTogglePower={togglePower}
+        onToggleConnector={toggleConnector}
+        onTogglePayment={togglePayment}
+        onItineranceQueryChange={setItineranceInputValue}
+        onOperatorQueryChange={setOperatorInputValue}
+        onToggleReservation={toggleReservation}
+        onTogglePmr={togglePmr}
+        onToggleTwoWheels={toggleTwoWheels}
       />
 
-      <MapContainer
-        center={FRANCE_CENTER}
-        zoom={INITIAL_ZOOM}
-        style={{ height: "100%", width: "100%" }}
-        preferCanvas={true}
-        zoomAnimation={true}
-        markerZoomAnimation={true}
-        fadeAnimation={true}
-        zoomControl={false}
-        attributionControl={true}
-      >
-        <div className={`pointer-events-none absolute left-4 top-4 z-[1000] transition-[left] duration-[280ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] md:top-4 ${zoomPanelOffsetClass}`}>
-          <div className="flex flex-col gap-2 pointer-events-auto">
-            <div className="bg-white">
-              <Button
-                priority="secondary"
-                iconId="fr-icon-add-line"
-                onClick={() => mapRef.current?.zoomIn()}
-                title="Label button"
-              />
-            </div>
-            <div className="bg-white">
-              <Button
-                priority="secondary"
-                iconId="fr-icon-subtract-line"
-                onClick={() => mapRef.current?.zoomOut()}
-                title="Label button"
-              />
-            </div>
-          </div>
-        </div>
-
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          maxZoom={19}
-          keepBuffer={4}
-        />
-
-        <MapEvents onViewChange={updateView} onMapReady={handleMapReady} />
-
-        {activeMode.kind === "markers" ? (
-          <ClusterLayer
-            clusters={clusters}
-            supercluster={supercluster}
-            zoom={zoom}
-            displayMode={mode === "pricing" ? "pricing" : "markers"}
-            selectedStationId={visibleSelectedStation?.id_station_itinerance ?? null}
-            onStationSelect={setSelectedStation}
-          />
-        ) : (
-          <HeatmapLayer
-            points={heatmapConfig.points}
-            maxIntensity={heatmapConfig.maxIntensity}
-            radius={activeHeatmap?.radius}
-            blur={activeHeatmap?.blur}
-          />
-        )}
-      </MapContainer>
+      <MapViewport
+        points={filteredPoints}
+        mode={mode}
+        selectedStation={visibleSelectedStation}
+        isPanelOpen={hasOpenPanel}
+        onStationSelect={setSelectedStation}
+      />
 
       <StationDetailsPanel
         station={visibleSelectedStation}

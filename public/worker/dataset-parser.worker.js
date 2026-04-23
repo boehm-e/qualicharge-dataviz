@@ -7640,8 +7640,8 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
   }
 
   // src/workers/dataset-parser.worker.ts
-  var STATIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/8bb0a6e2-1016-42ba-aaee-f72f55c82e9f.parquet";
-  var DYNAMIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/411443b1-6667-473f-8217-1c57c167408f.parquet";
+  var STATIC_PARQUET_URL = "/parquet/statique.parquet";
+  var DYNAMIC_PARQUET_URL = "/parquet/dynamique.parquet";
   var ROW_BATCH_SIZE = 2e4;
   var total = 0;
   var nextId = 1;

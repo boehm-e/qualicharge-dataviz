@@ -35,7 +35,7 @@ export default function IRVEMap() {
   const [isHeatmapPanelOpen, setIsHeatmapPanelOpen] = useState(false);
   const [selectedStation, setSelectedStation] = useState<QualichargeEVSEConsolidated | null>(null);
   const [mode, setMode] = useState<MapDisplayMode>("markers");
-  const [onlyStationsWithPrice, setOnlyStationsWithPrice] = useState(true);
+  const [onlyStationsWithPrice, setOnlyStationsWithPrice] = useState(false);
   const {
     filters,
     itineranceInputValue,

@@ -1,6 +1,7 @@
 import type { QualichargeEVSEConsolidated } from "@/types/irve";
 
 export type PricingStatus = "STANDARD" | "FREE" | "UNKNOWN" | "VARIABLE" | "URL_ONLY" | "MULTI_PLAN";
+const PRICING_MARKER_COLOR = "#3b82f6";
 
 export interface PricingTier {
   startTime?: string;
@@ -191,6 +192,7 @@ export function getStationPricing(station: QualichargeEVSEConsolidated) {
 export interface PricingMarkerContent {
   topLabel: string;
   bottomLabel: string;
+  toneColor: string;
 }
 
 export function getPricingMarkerContent(pricing: ExtractedPrice): PricingMarkerContent {
@@ -198,6 +200,7 @@ export function getPricingMarkerContent(pricing: ExtractedPrice): PricingMarkerC
     return {
       topLabel: "Gratuit",
       bottomLabel: "par kWh",
+      toneColor: PRICING_MARKER_COLOR,
     };
   }
 
@@ -205,6 +208,7 @@ export function getPricingMarkerContent(pricing: ExtractedPrice): PricingMarkerC
     return {
       topLabel: `${formatDecimalAmount(pricing.pricePerKwh)} EUR`,
       bottomLabel: "par kWh",
+      toneColor: PRICING_MARKER_COLOR,
     };
   }
 
@@ -217,6 +221,7 @@ export function getPricingMarkerContent(pricing: ExtractedPrice): PricingMarkerC
       return {
         topLabel: `${formatDecimalAmount(Math.min(...values))} EUR`,
         bottomLabel: "par kWh",
+        toneColor: PRICING_MARKER_COLOR,
       };
     }
   }
@@ -225,6 +230,7 @@ export function getPricingMarkerContent(pricing: ExtractedPrice): PricingMarkerC
     return {
       topLabel: "Variable",
       bottomLabel: "selon conditions",
+      toneColor: PRICING_MARKER_COLOR,
     };
   }
 
@@ -232,6 +238,7 @@ export function getPricingMarkerContent(pricing: ExtractedPrice): PricingMarkerC
     return {
       topLabel: "Voir site",
       bottomLabel: "tarif externe",
+      toneColor: PRICING_MARKER_COLOR,
     };
   }
 
@@ -239,6 +246,7 @@ export function getPricingMarkerContent(pricing: ExtractedPrice): PricingMarkerC
     return {
       topLabel: `${formatDecimalAmount(pricing.startFee)} EUR`,
       bottomLabel: "par session",
+      toneColor: PRICING_MARKER_COLOR,
     };
   }
 
@@ -246,11 +254,13 @@ export function getPricingMarkerContent(pricing: ExtractedPrice): PricingMarkerC
     return {
       topLabel: `${formatDecimalAmount(pricing.chargeFeePerHour)} EUR`,
       bottomLabel: "par heure",
+      toneColor: PRICING_MARKER_COLOR,
     };
   }
 
   return {
     topLabel: "Tarif",
-    bottomLabel: "non detecte",
+    bottomLabel: "NC",
+      toneColor: '#50504f',
   };
 }

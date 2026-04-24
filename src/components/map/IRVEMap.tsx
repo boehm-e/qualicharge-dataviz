@@ -151,9 +151,10 @@ export default function IRVEMap() {
 
   return (
     <div className="irve-map-wrapper">
-      <div className="absolute top-3 right-3 z-[10000] flex items-center gap-2">
-        <div className="flex items-center bg-white shadow-sm rounded-sm p-1 gap-1">
+      <div className="irve-map-toolbar-shell absolute top-3 right-3 left-3 z-[10000] flex justify-end sm:left-auto">
+        <div className="irve-map-toolbar-panel">
           <SegmentedControl
+            className="irve-map-toolbar__segmented"
             hideLegend
             segments={[
               {
@@ -188,38 +189,39 @@ export default function IRVEMap() {
             ] as unknown as [SegmentedControlProps.SegmentWithoutIcon, SegmentedControlProps.SegmentWithoutIcon]}
           />
 
-          <Button
-            priority={isHeatmapPanelOpen ? "primary" : "tertiary no outline"}
-            size="small"
-            iconId="fr-icon-information-line"
-            title="Informations sur la vue courante"
-            onClick={() => {
-              if (isHeatmapPanelOpen === false) {
-                setIsFiltersOpen(false);
-              }
-              setIsHeatmapPanelOpen((open) => !open);
-            }}
-          />
+          <div className="irve-map-toolbar-panel__actions">
+            <Button
+              priority={isHeatmapPanelOpen ? "primary" : "tertiary no outline"}
+              size="small"
+              iconId="fr-icon-information-line"
+              title="Informations sur la vue courante"
+              onClick={() => {
+                if (isHeatmapPanelOpen === false) {
+                  setIsFiltersOpen(false);
+                }
+                setIsHeatmapPanelOpen((open) => !open);
+              }}
+            />
 
-          <Button
-            priority={isFiltersOpen ? "primary" : "secondary"}
-            // size="small"
-            iconId="fr-icon-filter-line"
-            onClick={() => {
-              if (isFiltersOpen === false) {
-                setIsHeatmapPanelOpen(false);
-              }
-              setIsFiltersOpen((open) => !open);
-            }}
-          >
-            Filtres
-          </Button>
-          {/* <Badge severity="new">{uniqueStationCount} stations</Badge> */}
-          {activeFilterCount > 0 && (
-            <Badge severity="info">
-              {activeFilterCount} filtre{activeFilterCount > 1 ? "s" : ""}
-            </Badge>
-          )}
+            <Button
+              priority={isFiltersOpen ? "primary" : "secondary"}
+              iconId="fr-icon-filter-line"
+              className="irve-map-toolbar-panel__filters-btn"
+              onClick={() => {
+                if (isFiltersOpen === false) {
+                  setIsHeatmapPanelOpen(false);
+                }
+                setIsFiltersOpen((open) => !open);
+              }}
+            >
+              Filtres
+            </Button>
+            {activeFilterCount > 0 && (
+              <Badge severity="info">
+                {activeFilterCount} filtre{activeFilterCount > 1 ? "s" : ""}
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 
@@ -268,8 +270,7 @@ export default function IRVEMap() {
         onStationSelect={(station) => {
           setIsFiltersOpen(false);
           setIsHeatmapPanelOpen(false);
-          setSelectedStation(station)
-          console.log("STTATION", station)
+          setSelectedStation(station);
         }}
       />
 

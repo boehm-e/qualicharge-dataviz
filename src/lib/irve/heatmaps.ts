@@ -98,10 +98,10 @@ export function buildCountStops(
 export function buildQualitativeStops(): HeatmapGradientStop[] {
   return [
     { value: 0.15, color: DEFAULT_HEATMAP_GRADIENT[0.15], label: "Faible" },
-    { value: 0.4, color: DEFAULT_HEATMAP_GRADIENT[0.4], label: "Moderee" },
+    { value: 0.4, color: DEFAULT_HEATMAP_GRADIENT[0.4], label: "Moderée" },
     { value: 0.6, color: DEFAULT_HEATMAP_GRADIENT[0.6], label: "Soutenue" },
     { value: 0.8, color: DEFAULT_HEATMAP_GRADIENT[0.8], label: "Forte" },
-    { value: 1, color: DEFAULT_HEATMAP_GRADIENT[1], label: "Tres forte" },
+    { value: 1, color: DEFAULT_HEATMAP_GRADIENT[1], label: "Très forte" },
   ];
 }
 

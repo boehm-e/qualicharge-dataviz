@@ -627,9 +627,9 @@ body {
 
 @media (max-width: 960px) {
   .irve-map-toolbar-shell {
-    top: auto;
+    top: 0.75rem;
     right: auto;
-    bottom: 0.75rem;
+    bottom: auto;
     left: 50%;
     width: max-content;
     max-width: calc(100vw - 1.5rem);

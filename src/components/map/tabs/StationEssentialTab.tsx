@@ -26,6 +26,9 @@ export function StationEssentialTab({ station, copiedKey, copy }: EssentialTabPr
         title="Vue d'ensemble"
         desc={
           <div className="irve-sidepanel__hero">
+            <p>
+              <b>Aménageur: </b>{station.nom_amenageur}
+            </p>
             <ul className="fr-badges-group">
               <li>
                 <Badge severity={getPowerSeverity(station.summary.max_power)}>
@@ -46,7 +49,7 @@ export function StationEssentialTab({ station, copiedKey, copy }: EssentialTabPr
               <Tag small iconId="fr-icon-map-pin-2-line">{getStationTypeLabel(station.implantation_station)}</Tag>
               <Tag small iconId="fr-icon-time-line">{station.horaires || "Horaires non renseignés"}</Tag>
               <Tag small iconId="fr-icon-wheelchair-line">{getPmrLabel(station.accessibilite_pmr)}</Tag>
-              <Tag small iconId="fr-icon-battery-charge-line">{station.summary.total_power} kW cumulés</Tag>
+              {/* <Tag small iconId="fr-icon-battery-charge-line">{station.summary.total_power} kW cumulés</Tag> */}
               {station.station_deux_roues ? <Tag small iconId="fr-icon-bike-line">Compatible deux-roues</Tag> : null}
             </div>
 

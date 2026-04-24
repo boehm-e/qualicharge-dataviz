@@ -19,6 +19,8 @@ interface MarkerVisualContent {
   primaryLabel: string;
   secondaryLabel: string;
   toneColor: string | null;
+  primaryTextColor?: string | null;
+  secondaryTextColor?: string | null;
 }
 
 type MarkerContentBuilder = (station: QualichargeEVSEConsolidated) => MarkerVisualContent;
@@ -63,22 +65,32 @@ function getPointPlugsLabel(available: number, total: number | null | undefined)
   return `${available}/${total} PDC`;
 }
 
-function getPowerToneColor(power: number | null | undefined) {
-  if (!power) return "#6b7280";
-  if (power >= 150) return "#ef4444";
-  if (power >= 50) return "#f97316";
-  if (power >= 22) return "#3b82f6";
-  return "#22c55e";
+interface PowerTone {
+  bg: string;
+  text: string;
 }
 
+function getPowerTone(power: number | null | undefined): PowerTone {
+  if (!power) return { bg: "#6b7280", text: "#ffffff" };
+  if (power >= 350) return { bg: "#447049", text: "#e6feda" }; // sun-425 on 975
+  if (power >= 150) return { bg: "#68A532", text: "#e6feda" }; // main-640 on 975
+  if (power >= 50)  return { bg: "#95e257", text: "#447049" }; // 850 on sun-425
+  if (power >= 22)  return { bg: "#a9fb68", text: "#447049" }; // 925 on sun-425
+  if (power >= 7.4) return { bg: "#c9fcac", text: "#447049" }; // 950 on sun-425
+  return { bg: "#e6feda", text: "#447049" };                   // 975 on sun-425
+}
 const markerContentBuilders: Record<MarkerDisplayMode, MarkerContentBuilder> = {
   markers: (station) => {
     const dynamicSummary = getStationDynamicSummary(station);
 
+    const tone = getPowerTone(station.summary.max_power);
+
     return {
       primaryLabel: getPointPowerLabel(station.summary.max_power),
       secondaryLabel: getPointPlugsLabel(dynamicSummary.availableCount, station.pdcs.length),
-      toneColor: getPowerToneColor(station.summary.max_power),
+      toneColor: tone.bg,
+      primaryTextColor: tone.text,
+      secondaryTextColor: "#334155",
     };
   },
   pricing: (station) => {
@@ -89,6 +101,8 @@ const markerContentBuilders: Record<MarkerDisplayMode, MarkerContentBuilder> = {
       primaryLabel: pricingMarker.topLabel,
       secondaryLabel: pricingMarker.bottomLabel,
       toneColor: pricingMarker.toneColor,
+      primaryTextColor: "#ffffff",
+      secondaryTextColor: "#334155",
     };
   },
 };
@@ -98,21 +112,30 @@ function getPointIcon(
   secondaryLabel: string,
   toneColor: string | null,
   isSelected: boolean,
+  primaryTextColor?: string | null,
+  secondaryTextColor?: string | null,
   debug?: string
 ): DivIcon {
-  const cacheKey = `${primaryLabel}|${secondaryLabel}|${toneColor ?? "neutral"}|${isSelected ? "selected" : "default"}`;
+  const cacheKey = `${primaryLabel}|${secondaryLabel}|${toneColor ?? "neutral"}|${primaryTextColor ?? "default"}|${secondaryTextColor ?? "default"}|${isSelected ? "selected" : "default"}`;
   const cached = pointIconCache.get(cacheKey);
 
   if (cached) {
     return cached;
   }
 
+  const primaryStyle = [
+    toneColor ? `background:${toneColor}` : null,
+    primaryTextColor ? `color:${primaryTextColor}` : null,
+  ].filter(Boolean).join(";");
+
+  const secondaryStyle = secondaryTextColor ? `color:${secondaryTextColor}` : "";
+
   const icon = L.divIcon({
     html: `<div class="irve-point-card${isSelected ? " is-selected" : ""}">
-      <div class="irve-point-card__power"${toneColor ? ` style="background:${toneColor}"` : ""}>
+      <div class="irve-point-card__primary"${primaryStyle ? ` style="${primaryStyle}"` : ""}>
         ${primaryLabel}
       </div>
-      <div class="irve-point-card__meta">
+      <div class="irve-point-card__secondary"${secondaryStyle ? ` style="${secondaryStyle}"` : ""}>
         ${secondaryLabel}
       </div>
       ${debug ? `<div>${debug}</div>`:``}
@@ -196,6 +219,8 @@ export function ClusterLayer({
             markerContent.secondaryLabel,
             markerContent.toneColor,
             isSelected,
+            markerContent.primaryTextColor,
+            markerContent.secondaryTextColor,
             // `${getPointPlugsLabel(dynamicSummary.availableCount, p.pdcs.length)} | ${p.id_station_itinerance}`
           )}
           zIndexOffset={isSelected ? 2000 : 0}

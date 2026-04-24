@@ -7542,7 +7542,7 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
     const result = {
       operator,
       status: "STANDARD",
-      currency: "EUR",
+      currency: "€",
       originalText: rawText
     };
     if (rawText === "-" || rawText.toLowerCase() === "inconnu" || rawText === "") {
@@ -7588,7 +7588,7 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
     return result;
   }
   function formatAmount(value, suffix) {
-    return `${value.toLocaleString("fr-FR", { minimumFractionDigits: value % 1 === 0 ? 0 : 2, maximumFractionDigits: 4 })} EUR${suffix}`;
+    return `${value.toLocaleString("fr-FR", { minimumFractionDigits: value % 1 === 0 ? 0 : 2, maximumFractionDigits: 4 })} €${suffix}`;
   }
   function getPricingHeadline(pricing) {
     var _a;
@@ -7640,8 +7640,8 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
   }
 
   // src/workers/dataset-parser.worker.ts
-  var STATIC_PARQUET_URL = "/parquet/statique.parquet";
-  var DYNAMIC_PARQUET_URL = "/parquet/dynamique.parquet";
+  var STATIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/8bb0a6e2-1016-42ba-aaee-f72f55c82e9f.parquet";
+  var DYNAMIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/411443b1-6667-473f-8217-1c57c167408f.parquet";
   var ROW_BATCH_SIZE = 2e4;
   var total = 0;
   var nextId = 1;
@@ -7785,6 +7785,9 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
       }
     };
   }
+  function shouldDisplayStation(station) {
+    return station.summary.max_power >= 50;
+  }
   function consolidateStation(pdcs) {
     const firstPdc = pdcs[0];
     if (!firstPdc) {
@@ -7892,7 +7895,7 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
     const points = [];
     for (const stationPdcs of stations) {
       const station = consolidateStation(stationPdcs);
-      if (!station) {
+      if (!station || !shouldDisplayStation(station)) {
         continue;
       }
       const point = createFeature(station);

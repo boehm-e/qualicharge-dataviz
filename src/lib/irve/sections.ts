@@ -27,14 +27,14 @@ export function buildSections(station: QualichargeEVSEConsolidated): DetailSecti
     {
       title: "Recharge",
       items: [
-        {
-          label: "Raccordement",
-          rawValue: station.raccordement === Raccordement.DIRECT ? "Direct" : "Indirect",
-        },
+        // {
+        //   label: "Raccordement",
+        //   rawValue: station.raccordement === Raccordement.DIRECT ? "Direct" : "Indirect",
+        // },
         { label: "Puissance max par PDC", rawValue: `${station.summary.max_power} kW` },
-        { label: "Puissance totale station", rawValue: `${station.summary.total_power} kW` },
+        // { label: "Puissance totale station", rawValue: `${station.summary.total_power} kW` },
         { label: "Nombre de PDC", rawValue: String(station.pdcs.length) },
-        { label: "Numéro PDL", rawValue: station.num_pdl, copyable: true },
+        // { label: "Numéro PDL", rawValue: station.num_pdl, copyable: true },
         { label: "Cable T2 attache", rawValue: String(station.cable_t2_attache ?? null) },
         { label: "Station deux-roues", rawValue: String(station.station_deux_roues) },
       ],
@@ -55,7 +55,7 @@ export function buildSections(station: QualichargeEVSEConsolidated): DetailSecti
         { label: "Opérateur", rawValue: station.nom_operateur },
         { label: "Contact opérateur", rawValue: station.contact_operateur, copyable: true },
         { label: "Telephone opérateur", rawValue: station.telephone_operateur, copyable: true },
-        { label: "Aménageur", rawValue: station.nom_amenageur },
+        // { label: "Aménageur", rawValue: station.nom_amenageur },
         { label: "Contact aménageur", rawValue: station.contact_amenageur, copyable: true },
         { label: "SIREN aménageur", rawValue: station.siren_amenageur, copyable: true },
         { label: "Mise en service", rawValue: station.date_mise_en_service },

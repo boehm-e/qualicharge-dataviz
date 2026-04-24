@@ -8,7 +8,6 @@ import "leaflet.heat";
 
 interface HeatmapLayerProps {
   points: HeatmapPoint[];
-  maxIntensity: number;
   gradient?: HeatmapGradient;
   radius?: number;
   blur?: number;
@@ -16,7 +15,6 @@ interface HeatmapLayerProps {
 
 export function HeatmapLayer({
   points,
-  maxIntensity,
   gradient,
   radius = 26,
   blur = 18,
@@ -31,7 +29,7 @@ export function HeatmapLayer({
         blur,
         maxZoom: 16,
         minOpacity: 0.28,
-        max: Math.max(maxIntensity, 1),
+        max: 1,
         gradient,
       }
     );
@@ -41,7 +39,7 @@ export function HeatmapLayer({
     return () => {
       map.removeLayer(heatLayer);
     };
-  }, [blur, gradient, map, maxIntensity, points, radius]);
+  }, [blur, gradient, map, points, radius]);
 
   return null;
 }

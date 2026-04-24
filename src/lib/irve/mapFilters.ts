@@ -1,6 +1,6 @@
 import { AccessibilitePMR, ConditionAcces, type QualichargeEVSEConsolidated } from "@/types/irve";
 
-export type PowerFilterId = "ultra" | "veryFast" | "fast" | "standard";
+export type PowerFilterId = "ultraLevel2" | "ultraLevel1" | "veryFast" | "fast" | "standard";
 export type AccessFilter = "all" | "free" | "restricted";
 
 export interface MapFiltersState {
@@ -9,7 +9,7 @@ export interface MapFiltersState {
   connectors: Array<"type2" | "ccs" | "chademo" | "ef">;
   payment: Array<"free" | "card" | "onSite">;
   itineranceQuery: string;
-  operatorQuery: string;
+  selectedOperators: string[];
   reservationOnly: boolean;
   pmrOnly: boolean;
   twoWheelsOnly: boolean;
@@ -21,7 +21,7 @@ export const DEFAULT_MAP_FILTERS: MapFiltersState = {
   connectors: [],
   payment: [],
   itineranceQuery: "",
-  operatorQuery: "",
+  selectedOperators: [],
   reservationOnly: false,
   pmrOnly: false,
   twoWheelsOnly: false,
@@ -50,10 +50,12 @@ export const POWER_FILTER_OPTIONS: Array<{
   label: string;
   description: string;
 }> = [
-  { id: "ultra", label: "Ultra-rapide", description: "AFIR DC niveau 1 et 2 - 150 kW et plus" },
+  { id: "ultraLevel2", label: "Ultra-rapide niveau 2", description: "AFIR DC >= 350 kW" },
+  { id: "ultraLevel1", label: "Ultra-rapide niveau 1", description: "AFIR DC 150 a 349 kW" },
   { id: "veryFast", label: "Rapide DC", description: "AFIR DC rapide - 50 a 149 kW" },
-  { id: "fast", label: "AC elevee / DC lente", description: "AFIR AC > 22 kW ou DC < 50 kW" },
-  { id: "standard", label: "AC normale", description: "AFIR AC jusqu'a 22 kW" },
+  // Temporairement masqué: on n'affiche pas encore ces catégories ni sur la carte ni dans les filtres.
+  // { id: "fast", label: "AC elevee / DC lente", description: "AFIR AC > 22 kW ou DC < 50 kW" },
+  // { id: "standard", label: "AC normale", description: "AFIR AC jusqu'a 22 kW" },
 ];
 
 export const CONNECTOR_FILTER_OPTIONS: Array<{
@@ -77,8 +79,10 @@ export const PAYMENT_FILTER_OPTIONS: Array<{
 
 function matchesPower(power: number, filterId: PowerFilterId) {
   switch (filterId) {
-    case "ultra":
-      return power >= 150;
+    case "ultraLevel2":
+      return power >= 350;
+    case "ultraLevel1":
+      return power >= 150 && power < 350;
     case "veryFast":
       return power >= 50 && power < 150;
     case "fast":
@@ -96,7 +100,7 @@ export function getActiveFilterCount(filters: MapFiltersState) {
   count += filters.connectors.length;
   count += filters.payment.length;
   if (normalizeText(filters.itineranceQuery).length > 0) count += 1;
-  if (normalizeText(filters.operatorQuery).length > 0) count += 1;
+  count += filters.selectedOperators.length;
   if (filters.reservationOnly) count += 1;
   if (filters.pmrOnly) count += 1;
   if (filters.twoWheelsOnly) count += 1;
@@ -159,8 +163,11 @@ export function matchesStationFilters(
   }
 
   if (
-    !matchesTextQuery(station.nom_operateur, filters.operatorQuery) &&
-    !matchesTextQuery(station.nom_amenageur, filters.operatorQuery)
+    filters.selectedOperators.length > 0 &&
+    !filters.selectedOperators.some(
+      (operator) =>
+        station.nom_operateur === operator || station.nom_amenageur === operator
+    )
   ) {
     return false;
   }

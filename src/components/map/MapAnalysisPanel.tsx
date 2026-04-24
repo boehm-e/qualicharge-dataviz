@@ -42,7 +42,7 @@ export function MapAnalysisPanel({
   return (
     <MapSidePanel
       id="map-heatmaps"
-      className="z-20"
+      className="z-1220!"
       isOpen={isOpen}
       onClose={onClose}
       eyebrow="Carte de recharge"
@@ -95,7 +95,7 @@ export function MapAnalysisPanel({
             <div className="space-y-2 text-sm text-slate-700">
               <p className="m-0">{activeMode.description}</p>
               <p className="m-0 text-xs text-slate-500">
-                {`${activePointCount} stations contribuent actuellement à cette heatmap.`}
+                {`${activePointCount} bornes contribuent actuellement à cette heatmap.`}
               </p>
             </div>
           }
@@ -104,9 +104,9 @@ export function MapAnalysisPanel({
 
       {isPricingMode ? (
         <ToggleSwitch
-          helperText="Conserve uniquement les stations pour lesquelles un prix exploitable a ete detecte."
-          inputTitle="Afficher uniquement les stations avec prix"
-          label="Stations avec prix seulement"
+          helperText="Conserve uniquement les bornes pour lesquelles un prix exploitable a ete detecte."
+          inputTitle="Afficher uniquement les bornes avec prix"
+          label="Bornes avec prix seulement"
           labelPosition="left"
           showCheckedHint
           checked={onlyStationsWithPrice}

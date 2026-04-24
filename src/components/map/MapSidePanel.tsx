@@ -81,7 +81,7 @@ export function MapSidePanel({
               ) : null}
               <h2
                 id={titleId}
-                className="m-0! text-[1rem]! leading-tight text-slate-900"
+                className="m-0! text-[1rem]! text-slate-900 leading-tight!"
               >
                 {title}
               </h2>

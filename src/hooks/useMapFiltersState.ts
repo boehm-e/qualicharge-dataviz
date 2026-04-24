@@ -22,10 +22,9 @@ function toggleListValue<T extends string>(items: T[], value: T) {
 export function useMapFiltersState() {
   const [filters, setFilters] = useState<MapFiltersState>(DEFAULT_MAP_FILTERS);
   const [itineranceInputValue, setItineranceInputValue] = useState(DEFAULT_MAP_FILTERS.itineranceQuery);
-  const [operatorInputValue, setOperatorInputValue] = useState(DEFAULT_MAP_FILTERS.operatorQuery);
+  const [selectedOperators, setSelectedOperators] = useState<string[]>(DEFAULT_MAP_FILTERS.selectedOperators);
 
   const debouncedItineranceQuery = useDebouncedValue(itineranceInputValue.trim(), SEARCH_DEBOUNCE_MS);
-  const debouncedOperatorQuery = useDebouncedValue(operatorInputValue.trim(), SEARCH_DEBOUNCE_MS);
 
   useEffect(() => {
     startTransition(() => {
@@ -40,16 +39,16 @@ export function useMapFiltersState() {
   useEffect(() => {
     startTransition(() => {
       setFilters((current) =>
-        current.operatorQuery === debouncedOperatorQuery
+        current.selectedOperators === selectedOperators
           ? current
-          : { ...current, operatorQuery: debouncedOperatorQuery }
+          : { ...current, selectedOperators }
       );
     });
-  }, [debouncedOperatorQuery]);
+  }, [selectedOperators]);
 
   const resetFilters = useCallback(() => {
     setItineranceInputValue(DEFAULT_MAP_FILTERS.itineranceQuery);
-    setOperatorInputValue(DEFAULT_MAP_FILTERS.operatorQuery);
+    setSelectedOperators(DEFAULT_MAP_FILTERS.selectedOperators);
     setFilters(DEFAULT_MAP_FILTERS);
   }, []);
 
@@ -95,10 +94,10 @@ export function useMapFiltersState() {
   return {
     filters,
     itineranceInputValue,
-    operatorInputValue,
+    selectedOperators,
     activeFilterCount,
     setItineranceInputValue,
-    setOperatorInputValue,
+    setSelectedOperators,
     resetFilters,
     setAccess,
     togglePower,

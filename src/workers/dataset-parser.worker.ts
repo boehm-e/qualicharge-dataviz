@@ -16,10 +16,10 @@ import type {
 type StaticCsvRow = Partial<Record<keyof QualichargeEVSEStatique, string>>;
 type DynamicCsvRow = Partial<Record<keyof QualichargeEVSEDynamic | "id_station_itinerance", string>>;
 
-const STATIC_PARQUET_URL = "/parquet/statique.parquet";
-const DYNAMIC_PARQUET_URL = "/parquet/dynamique.parquet";
-// const STATIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/8bb0a6e2-1016-42ba-aaee-f72f55c82e9f.parquet";
-// const DYNAMIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/411443b1-6667-473f-8217-1c57c167408f.parquet";
+// const STATIC_PARQUET_URL = "/parquet/statique.parquet";
+// const DYNAMIC_PARQUET_URL = "/parquet/dynamique.parquet";
+const STATIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/8bb0a6e2-1016-42ba-aaee-f72f55c82e9f.parquet";
+const DYNAMIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/411443b1-6667-473f-8217-1c57c167408f.parquet";
 const ROW_BATCH_SIZE = 20_000;
 
 let total = 0;
@@ -187,6 +187,11 @@ function createFeature(row: QualichargeEVSEConsolidated): IRVEPointFeature | nul
   };
 }
 
+function shouldDisplayStation(station: QualichargeEVSEConsolidated) {
+  // Temporairement, la carte ne doit afficher que les stations AFIR DC >= 50 kW.
+  return station.summary.max_power >= 50;
+}
+
 function consolidateStation(pdcs: QualichargeEVSEPdc[]): QualichargeEVSEConsolidated | null {
   const firstPdc = pdcs[0];
   if (!firstPdc) {
@@ -310,7 +315,7 @@ async function loadParquet() {
 
   for (const stationPdcs of stations) {
     const station = consolidateStation(stationPdcs);
-    if (!station) {
+    if (!station || !shouldDisplayStation(station)) {
       continue;
     }
 

@@ -35,10 +35,11 @@ export function StationDetailsPanel({ station, isOpen, onClose }: StationDetails
     reset();
   }, [station, reset]);
 
-  const panelTitle = station ? station.nom_station || station.adresse_station : "Aucune station sélectionnée";
+  const panelTitle = station ? `${station.nom_station}` : "Aucune station sélectionnée";
+  // const panelTitle = station ? `${station?.nom_amenageur} / ${station.nom_station}` : "Aucune station sélectionnée";
   const panelSubtitle = station
     ? station.adresse_station
-    : "Cliquez sur une fiche depuis la carte pour afficher les détails complets de la station.";
+    : "Cliquez sur une fiche depuis la carte pour afficher les détails complets dela borne.";
   const panoramaHref = panoramaPicture
     ? `https://api.panoramax.xyz/?focus=pic/${panoramaPicture.lat}/${panoramaPicture.lon}&pic=${panoramaPicture.id}`
     : null;
@@ -57,7 +58,7 @@ export function StationDetailsPanel({ station, isOpen, onClose }: StationDetails
   return (
     <MapSidePanel
       id="station-details"
-      className="z-10"
+      className="z-1210!"
       isOpen={isOpen}
       onClose={onClose}
       eyebrow="Station de recharge"
@@ -75,7 +76,7 @@ export function StationDetailsPanel({ station, isOpen, onClose }: StationDetails
           onTabChange={(tabId) => setSelectedTabId(tabId as StationTabId)}
           tabs={[
             { tabId: "essentiel", label: "Essentiel", iconId: "fr-icon-information-line" },
-             { tabId: "connecteurs", label: "Prises", iconId: "fr-icon-flashlight-line" },
+             { tabId: "connecteurs", label: "Connecteurs", iconId: "fr-icon-flashlight-line" },
              { tabId: "acces", label: "Services", iconId: "fr-icon-user-line" },
              { tabId: "tarification", label: "Tarifs", iconId: "fr-icon-money-euro-circle-line" },
              { tabId: "details", label: "Détails", iconId: "fr-icon-list-unordered" },

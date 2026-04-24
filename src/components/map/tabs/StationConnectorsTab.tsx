@@ -97,7 +97,7 @@ function ConnectorAccordion({
       >
         <div ref={contentRef} className="space-y-4 pb-4">
           {/* <p className="mb-0 text-sm text-(--text-mention-grey)">{powerCategoryLabel}</p> */}
-          <Notice
+          {/* <Notice
             description={powerCategoryLabel}
             link={{
               linkProps: {
@@ -108,7 +108,7 @@ function ConnectorAccordion({
             }}
             severity="info"
             title="Règlementation AFIR -"
-          />
+          /> */}
 
 
           <div className="space-y-2">

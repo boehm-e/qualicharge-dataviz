@@ -16,16 +16,20 @@ import {
   POWER_FILTER_OPTIONS,
   type MapFiltersState,
 } from "@/lib/irve/mapFilters";
+import type { MapDisplayMode } from "@/lib/irve/mapModes";
+import { MultiSelectCheckbox } from "@/components/MultiSelectCheckbox";
 import { MapSidePanel } from "./MapSidePanel";
 
 interface MapFiltersPanelProps {
   filters: MapFiltersState;
   itineranceInputValue: string;
-  operatorInputValue: string;
   isOpen: boolean;
   activeCount: number;
   stationCount: number;
   pointCount: number;
+  operatorOptions: Array<{ value: string; label: string }>;
+  operatorsWithoutTarification: string[];
+  mapDisplayMode: MapDisplayMode;
   onClose: () => void;
   onReset: () => void;
   onAccessChange: (value: MapFiltersState["access"]) => void;
@@ -33,7 +37,7 @@ interface MapFiltersPanelProps {
   onToggleConnector: (value: typeof CONNECTOR_FILTER_OPTIONS[number]["id"]) => void;
   onTogglePayment: (value: typeof PAYMENT_FILTER_OPTIONS[number]["id"]) => void;
   onItineranceQueryChange: (value: string) => void;
-  onOperatorQueryChange: (value: string) => void;
+  onSelectedOperatorsChange: (value: string[]) => void;
   onToggleReservation: () => void;
   onTogglePmr: () => void;
   onToggleTwoWheels: () => void;
@@ -126,11 +130,13 @@ function FilterAccordionSection({
 export function MapFiltersPanel({
   filters,
   itineranceInputValue,
-  operatorInputValue,
   isOpen,
   activeCount,
   stationCount,
   pointCount,
+  operatorOptions,
+  operatorsWithoutTarification,
+  mapDisplayMode,
   onClose,
   onReset,
   onAccessChange,
@@ -138,41 +144,20 @@ export function MapFiltersPanel({
   onToggleConnector,
   onTogglePayment,
   onItineranceQueryChange,
-  onOperatorQueryChange,
+  onSelectedOperatorsChange,
   onToggleReservation,
   onTogglePmr,
   onToggleTwoWheels,
 }: MapFiltersPanelProps) {
-  const serviceToggles = [
-    {
-      checked: filters.reservationOnly,
-      helperText: "Ne garder que les stations proposant une reservation.",
-      label: "Reservation",
-      onChange: onToggleReservation,
-    },
-    {
-      checked: filters.pmrOnly,
-      helperText: "Masquer les stations declarees non accessibles.",
-      label: "Accessibilite PMR",
-      onChange: onTogglePmr,
-    },
-    {
-      checked: filters.twoWheelsOnly,
-      helperText: "Afficher uniquement les stations compatibles deux-roues.",
-      label: "Compatibilite deux-roues",
-      onChange: onToggleTwoWheels,
-    },
-  ] as const;
-
   return (
     <MapSidePanel
       id="map-filters"
-      className="z-20"
+      className="z-1220!"
       isOpen={isOpen}
       onClose={onClose}
       eyebrow="Carte de recharge"
       title="Filtres"
-      subtitle="Affinez les stations visibles sur la carte et dans les clusters."
+      subtitle="Affinez les bornes visibles sur la carte et dans les clusters."
     >
       <Card
         title="Résultats visibles"
@@ -224,25 +209,23 @@ export function MapFiltersPanel({
                 }}
               />
 
-            <Input
-              label="Operateur ou amenageur"
-              hintText="Recherche libre sur les noms d'operateur et d'amenageur. Exemple : Tesla."
-                nativeInputProps={{
-                  type: "search",
-                  value: operatorInputValue,
-                  placeholder: "Ex. Tesla, Izivia, Electra",
-                  onChange: (event) => {
-                    onOperatorQueryChange(event.currentTarget.value);
-                  },
-                }}
-              />
+            <MultiSelectCheckbox
+              label="Opérateur ou aménageur"
+              hintText="Sélectionnez un ou plusieurs opérateurs ou aménageurs."
+              options={operatorOptions}
+              selectedValues={filters.selectedOperators}
+              onChange={onSelectedOperatorsChange}
+              placeholder="Tous les opérateurs"
+              disabledOptions={mapDisplayMode === "pricing" ? operatorsWithoutTarification : []}
+              message={mapDisplayMode === "pricing" ? "Nous ne pouvons afficher que les tarifs des opérateurs qui les transmettentent." : undefined}
+            />
           </div>
         }
       />
 
       <SegmentedControl
         small
-        legend="Acces"
+        legend="Accès"
         segments={[
           {
             label: "Toutes",
@@ -282,7 +265,7 @@ export function MapFiltersPanel({
 
       <FilterAccordionSection label="Connecteurs">
         <FilterCheckboxGroup
-          legend="Connecteurs disponiblés"
+          legend="Connecteurs disponibles"
           options={CONNECTOR_FILTER_OPTIONS.map((option) => ({
             checked: filters.connectors.includes(option.id),
             label: option.label,
@@ -291,7 +274,7 @@ export function MapFiltersPanel({
         />
       </FilterAccordionSection>
 
-      <FilterAccordionSection label="Paiement">
+      {/* <FilterAccordionSection label="Paiement">
         <FilterCheckboxGroup
           legend="Moyens de paiement"
           options={PAYMENT_FILTER_OPTIONS.map((option) => ({
@@ -300,9 +283,9 @@ export function MapFiltersPanel({
             onChange: () => onTogglePayment(option.id),
           }))}
         />
-      </FilterAccordionSection>
+      </FilterAccordionSection> */}
 
-      <FilterAccordionSection label="Services et accessibilité">
+      {/* <FilterAccordionSection label="Services et accessibilité">
         <div className="irve-filters-panel__toggles">
           {serviceToggles.map((toggle) => (
             <ToggleSwitch
@@ -316,7 +299,7 @@ export function MapFiltersPanel({
             />
           ))}
         </div>
-      </FilterAccordionSection>
+      </FilterAccordionSection> */}
 
     </MapSidePanel>
   );

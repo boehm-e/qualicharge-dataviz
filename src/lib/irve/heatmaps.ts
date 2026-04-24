@@ -7,6 +7,8 @@ export interface HeatmapGradientStop {
   label: string;
 }
 
+export type HeatmapLegendKind = "absolute" | "qualitative";
+
 export interface HeatmapGradient {
   [key: number]: string;
 }
@@ -17,7 +19,17 @@ export interface HeatmapPoint {
   intensity: number;
 }
 
-export type HeatmapMode = "plugCount" | "availabilityRatio" | "outOfService" | "serviceCoverage";
+export interface HeatmapConfig {
+  points: HeatmapPoint[];
+  maxIntensity: number;
+  stops: HeatmapGradientStop[];
+}
+
+export type HeatmapMode =
+  | "plugCount"
+  | "availabilityRatio"
+  | "outOfService"
+  | "serviceCoverage";
 
 export interface HeatmapDefinition {
   value: Exclude<HeatmapMode, null>;
@@ -26,9 +38,11 @@ export interface HeatmapDefinition {
   order: number;
   description: string;
   legendTitle: string;
+  legendKind: HeatmapLegendKind;
   emptyMessage: string;
   radius: number;
   blur: number;
+  normalizedWeightExponent?: number;
 }
 
 export interface HeatmapDefinitionWithMetric extends HeatmapDefinition {
@@ -81,86 +95,98 @@ export function buildCountStops(
   });
 }
 
+export function buildQualitativeStops(): HeatmapGradientStop[] {
+  return [
+    { value: 0.15, color: DEFAULT_HEATMAP_GRADIENT[0.15], label: "Faible" },
+    { value: 0.4, color: DEFAULT_HEATMAP_GRADIENT[0.4], label: "Moderee" },
+    { value: 0.6, color: DEFAULT_HEATMAP_GRADIENT[0.6], label: "Soutenue" },
+    { value: 0.8, color: DEFAULT_HEATMAP_GRADIENT[0.8], label: "Forte" },
+    { value: 1, color: DEFAULT_HEATMAP_GRADIENT[1], label: "Tres forte" },
+  ];
+}
+
 export const SERVICE_HEATMAPS: HeatmapDefinitionWithMetric[] = [
-  {
-    value: "availabilityRatio",
-    label: "Disponibilité réelle des points de charge",
-    shortLabel: "Disponibilité réelle",
-    order: 20,
-    description:
-      "Montre les zones où la part de points de charge libres et fonctionnels est la plus forte.",
-    legendTitle: "Part des points libres et fonctionnels",
-    emptyMessage: "Aucune donnée dynamique exploitable pour calculer la disponibilité.",
-    radius: 30,
-    blur: 22,
-    getIntensity: (station) => {
-      const summary = getStationDynamicSummary(station);
-      const denominator = Math.max(summary.pdcsWithDynamicCount, station.pdcs.length, 0);
+  // {
+  //   value: "availabilityRatio",
+  //   label: "Disponibilité réelle des points de charge",
+  //   shortLabel: "Disponibilité réelle",
+  //   order: 20,
+  //   description:
+  //     "Montre les zones où la part de points de charge libres et fonctionnels est la plus forte.",
+  //   legendTitle: "Part des points libres et fonctionnels",
+  //   emptyMessage: "Aucune donnée dynamique exploitable pour calculer la disponibilité.",
+  //   radius: 30,
+  //   blur: 22,
+  //   getIntensity: (station) => {
+  //     const summary = getStationDynamicSummary(station);
+  //     const denominator = Math.max(summary.pdcsWithDynamicCount, station.pdcs.length, 0);
 
-      if (denominator <= 0) {
-        return null;
-      }
+  //     if (denominator <= 0) {
+  //       return null;
+  //     }
 
-      return summary.availableCount / denominator;
-    },
-    getStops: () => [
-      { value: 0, color: "#1d4ed8", label: "0 %" },
-      { value: 0.25, color: "#06b6d4", label: "25 %" },
-      { value: 0.5, color: "#22c55e", label: "50 %" },
-      { value: 0.75, color: "#f59e0b", label: "75 %" },
-      { value: 1, color: "#dc2626", label: "100 %" },
-    ],
-  },
-  {
-    value: "outOfService",
-    label: "Pannes et indisponibilités",
-    shortLabel: "Pannes et indisponibilités",
-    order: 30,
-    description:
-      "Repère les zones où les points de charge hors service ou non fonctionnels sont les plus nombreux.",
-    legendTitle: "Nombre de points en panne ou indisponibles",
-    emptyMessage: "Aucun point hors service ou non fonctionnel dans la sélection courante.",
-    radius: 28,
-    blur: 20,
-    getIntensity: (station) => {
-      const count = station.pdcs.filter(
-        (pdc) => pdc.dynamic?.etat_pdc === EtatPDCEnum.HORS_SERVICE || !isFunctionalPdc(pdc)
-      ).length;
+  //     return summary.availableCount / denominator;
+  //   },
+  //   getStops: () => [
+  //     { value: 0, color: "#1d4ed8", label: "0 %" },
+  //     { value: 0.25, color: "#06b6d4", label: "25 %" },
+  //     { value: 0.5, color: "#22c55e", label: "50 %" },
+  //     { value: 0.75, color: "#f59e0b", label: "75 %" },
+  //     { value: 1, color: "#dc2626", label: "100 %" },
+  //   ],
+  // },
+  // {
+  //   value: "outOfService",
+  //   label: "Pannes et indisponibilités",
+  //   shortLabel: "Pannes et indisponibilités",
+  //   order: 30,
+  //   description:
+  //     "Repère les zones où les points de charge hors service ou non fonctionnels sont les plus nombreux.",
+  //   legendTitle: "Nombre de points en panne ou indisponibles",
+  //   emptyMessage: "Aucun point hors service ou non fonctionnel dans la sélection courante.",
+  //   radius: 28,
+  //   blur: 20,
+  //   getIntensity: (station) => {
+  //     const count = station.pdcs.filter(
+  //       (pdc) => pdc.dynamic?.etat_pdc === EtatPDCEnum.HORS_SERVICE || !isFunctionalPdc(pdc)
+  //     ).length;
 
-      return count > 0 ? count : null;
-    },
-    getStops: (maxIntensity) => buildCountStops(maxIntensity, "point en panne", "points en panne"),
-  },
-  {
-    value: "serviceCoverage",
-    label: "Couverture de service exploitable",
-    shortLabel: "Couverture exploitable",
-    order: 40,
-    description:
-      "Met en avant les zones qui cumulent le plus de points de charge actuellement libres et fonctionnels.",
-    legendTitle: "Nombre de points libres et fonctionnels",
-    emptyMessage: "Aucun point libre et fonctionnel détecté dans la sélection courante.",
-    radius: 30,
-    blur: 22,
-    getIntensity: (station) => {
-      const summary = getStationDynamicSummary(station);
-      return summary.availableCount > 0 ? summary.availableCount : null;
-    },
-    getStops: (maxIntensity) => buildCountStops(maxIntensity, "point disponible", "points disponibles"),
-  },
+  //     return count > 0 ? count : null;
+  //   },
+  //   getStops: (maxIntensity) => buildCountStops(maxIntensity, "point en panne", "points en panne"),
+  // },
+  // {
+  //   value: "serviceCoverage",
+  //   label: "Couverture de service exploitable",
+  //   shortLabel: "Couverture exploitable",
+  //   order: 40,
+  //   description:
+  //     "Met en avant les zones qui cumulent le plus de points de charge actuellement libres et fonctionnels.",
+  //   legendTitle: "Nombre de points libres et fonctionnels",
+  //   emptyMessage: "Aucun point libre et fonctionnel détecté dans la sélection courante.",
+  //   radius: 30,
+  //   blur: 22,
+  //   getIntensity: (station) => {
+  //     const summary = getStationDynamicSummary(station);
+  //     return summary.availableCount > 0 ? summary.availableCount : null;
+  //   },
+  //   getStops: (maxIntensity) => buildCountStops(maxIntensity, "point disponible", "points disponibles"),
+  // },
   {
     value: "plugCount",
-    label: "Capacité totale du réseau",
-    shortLabel: "Capacité totale",
+    label: "Concentration de capacite du reseau",
+    shortLabel: "Capacité totale (Bêta)",
     order: 50,
     description:
-      "Visualise les territoires qui concentrent le plus grand nombre de points de charge, sans tenir compte de leur état.",
-    legendTitle: "Nombre total de points de charge",
+      "Visualise les zones ou la concentration locale de points de charge est la plus forte, sans representer un nombre absolu station par station.",
+    legendTitle: "Concentration locale de points de charge",
+    legendKind: "qualitative",
     emptyMessage: "Aucune station avec un nombre de points de charge exploitable.",
-    radius: 32,
-    blur: 24,
+    radius: 25,
+    blur: 12,
+    normalizedWeightExponent: 0.7,
     getIntensity: (station) => (station.pdcs.length > 0 ? station.pdcs.length : null),
-    getStops: (maxIntensity) => buildCountStops(maxIntensity, "point", "points"),
+    getStops: () => buildQualitativeStops(),
   },
 ];
 
@@ -175,12 +201,12 @@ export function getHeatmapDefinition(mode: HeatmapMode) {
 export function buildHeatmapConfig(
   stations: QualichargeEVSEConsolidated[],
   activeHeatmap: HeatmapDefinitionWithMetric | null
-) {
+): HeatmapConfig {
   if (!activeHeatmap) {
     return {
-      points: [] as HeatmapPoint[],
+      points: [],
       maxIntensity: 0,
-      stops: [] as HeatmapGradientStop[],
+      stops: [],
     };
   }
 
@@ -199,9 +225,17 @@ export function buildHeatmapConfig(
   });
 
   const maxIntensity = entries.reduce((max, entry) => Math.max(max, entry.intensity), 0);
+  const normalizedWeightExponent = activeHeatmap.normalizedWeightExponent ?? 1;
+  const normalizedPoints =
+    maxIntensity > 0
+      ? entries.map((entry) => ({
+          ...entry,
+          intensity: Math.pow(entry.intensity / maxIntensity, normalizedWeightExponent),
+        }))
+      : [];
 
   return {
-    points: entries as HeatmapPoint[],
+    points: normalizedPoints,
     maxIntensity,
     stops: activeHeatmap.getStops(maxIntensity),
   };

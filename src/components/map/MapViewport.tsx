@@ -131,7 +131,6 @@ export function MapViewport({
       ) : (
         <HeatmapLayer
           points={heatmapConfig.points}
-          maxIntensity={heatmapConfig.maxIntensity}
           radius={activeHeatmap?.radius}
           blur={activeHeatmap?.blur}
         />

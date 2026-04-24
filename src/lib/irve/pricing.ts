@@ -14,7 +14,7 @@ export interface PricingTier {
 export interface ExtractedPrice {
   operator: string;
   status: PricingStatus;
-  currency: "EUR";
+  currency: "€";
   startFee?: number;
   pricePerKwh?: number;
   chargeFeePerHour?: number;
@@ -24,6 +24,11 @@ export interface ExtractedPrice {
   alternativePlans?: Partial<ExtractedPrice>[];
   url?: string;
   originalText: string;
+}
+
+export interface PricingFact {
+  label: string;
+  value: string;
 }
 
 function parseNum(str?: string): number | undefined {
@@ -74,7 +79,7 @@ export function parseTarification(tarification: string | null | undefined, opera
   const result: ExtractedPrice = {
     operator,
     status: "STANDARD",
-    currency: "EUR",
+    currency: "€",
     originalText: rawText,
   };
 
@@ -128,7 +133,7 @@ export function parseTarification(tarification: string | null | undefined, opera
 }
 
 function formatAmount(value: number, suffix: string) {
-  return `${value.toLocaleString("fr-FR", { minimumFractionDigits: value % 1 === 0 ? 0 : 2, maximumFractionDigits: 4 })} EUR${suffix}`;
+  return `${value.toLocaleString("fr-FR", { minimumFractionDigits: value % 1 === 0 ? 0 : 2, maximumFractionDigits: 4 })} €${suffix}`;
 }
 
 function formatDecimalAmount(value: number, minimumFractionDigits = 2, maximumFractionDigits = 4) {
@@ -169,6 +174,53 @@ export function getPricingHeadline(pricing: ExtractedPrice): string | null {
   }
 }
 
+export function getPricingStatusLabel(status: PricingStatus): string {
+  switch (status) {
+    case "FREE":
+      return "Gratuit";
+    case "UNKNOWN":
+      return "Non renseigné";
+    case "VARIABLE":
+      return "Variable";
+    case "URL_ONLY":
+      return "Lien externe";
+    case "MULTI_PLAN":
+      return "Plusieurs tarifs";
+    default:
+      return "Tarif extrait";
+  }
+}
+
+export function getPricingFacts(pricing: ExtractedPrice): PricingFact[] {
+  const facts: PricingFact[] = [];
+
+  if (typeof pricing.pricePerKwh === "number") {
+    facts.push({ label: "Prix par kWh", value: formatAmount(pricing.pricePerKwh, "/kWh") });
+  }
+
+  if (typeof pricing.startFee === "number") {
+    facts.push({ label: "Frais de session", value: formatAmount(pricing.startFee, "/session") });
+  }
+
+  if (typeof pricing.chargeFeePerHour === "number") {
+    facts.push({ label: "Frais par heure de charge", value: formatAmount(pricing.chargeFeePerHour, "/h") });
+  }
+
+  if (typeof pricing.idleFeePerHour === "number") {
+    facts.push({ label: "Frais d'occupation", value: formatAmount(pricing.idleFeePerHour, "/h") });
+  }
+
+  if (typeof pricing.idleFeePerMin === "number") {
+    facts.push({ label: "Frais de parking à la minute", value: formatAmount(pricing.idleFeePerMin, "/min") });
+  }
+
+  return facts;
+}
+
+export function hasStructuredPricing(pricing: ExtractedPrice): boolean {
+  return getPricingFacts(pricing).length > 0 || Boolean(pricing.timeTiers?.length) || Boolean(pricing.alternativePlans?.length);
+}
+
 export function getPricingSortValue(pricing: ExtractedPrice): number | null {
   if (pricing.status === "FREE") {
     return 0;
@@ -206,7 +258,7 @@ export function getPricingMarkerContent(pricing: ExtractedPrice): PricingMarkerC
 
   if (typeof pricing.pricePerKwh === "number") {
     return {
-      topLabel: `${formatDecimalAmount(pricing.pricePerKwh)} EUR`,
+      topLabel: `${formatDecimalAmount(pricing.pricePerKwh)} €`,
       bottomLabel: "par kWh",
       toneColor: PRICING_MARKER_COLOR,
     };
@@ -219,7 +271,7 @@ export function getPricingMarkerContent(pricing: ExtractedPrice): PricingMarkerC
 
     if (values.length > 0) {
       return {
-        topLabel: `${formatDecimalAmount(Math.min(...values))} EUR`,
+        topLabel: `${formatDecimalAmount(Math.min(...values))} €`,
         bottomLabel: "par kWh",
         toneColor: PRICING_MARKER_COLOR,
       };
@@ -244,7 +296,7 @@ export function getPricingMarkerContent(pricing: ExtractedPrice): PricingMarkerC
 
   if (typeof pricing.startFee === "number") {
     return {
-      topLabel: `${formatDecimalAmount(pricing.startFee)} EUR`,
+      topLabel: `${formatDecimalAmount(pricing.startFee)} €`,
       bottomLabel: "par session",
       toneColor: PRICING_MARKER_COLOR,
     };
@@ -252,7 +304,7 @@ export function getPricingMarkerContent(pricing: ExtractedPrice): PricingMarkerC
 
   if (typeof pricing.chargeFeePerHour === "number") {
     return {
-      topLabel: `${formatDecimalAmount(pricing.chargeFeePerHour)} EUR`,
+      topLabel: `${formatDecimalAmount(pricing.chargeFeePerHour)} €`,
       bottomLabel: "par heure",
       toneColor: PRICING_MARKER_COLOR,
     };
@@ -261,6 +313,6 @@ export function getPricingMarkerContent(pricing: ExtractedPrice): PricingMarkerC
   return {
     topLabel: "Tarif",
     bottomLabel: "NC",
-      toneColor: '#50504f',
+    toneColor: "#50504f",
   };
 }

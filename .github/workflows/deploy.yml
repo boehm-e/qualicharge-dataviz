@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - github-pages-ci
+      - 17-april-feedbacks
 
 permissions:
   contents: read

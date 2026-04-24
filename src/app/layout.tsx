@@ -1,4 +1,4 @@
-import { DsfrProvider } from "@/dsfr-bootstrap";
+import { DsfrProvider, StartDsfrOnHydration } from "@/dsfr-bootstrap";
 import { DsfrHead, getHtmlAttributes } from "@/dsfr-bootstrap/server-only-index";
 import "./globals.css";
 
@@ -13,6 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <DsfrProvider lang={lang}>
           {children}
         </DsfrProvider>
+        <StartDsfrOnHydration />
       </body>
     </html>
   );

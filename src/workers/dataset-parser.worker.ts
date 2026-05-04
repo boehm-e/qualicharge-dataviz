@@ -187,10 +187,6 @@ function createFeature(row: QualichargeEVSEConsolidated): IRVEPointFeature | nul
   };
 }
 
-function shouldDisplayStation(station: QualichargeEVSEConsolidated) {
-  // Temporairement, la carte ne doit afficher que les stations AFIR DC >= 50 kW.
-  return station.summary.max_power >= 50;
-}
 
 function consolidateStation(pdcs: QualichargeEVSEPdc[]): QualichargeEVSEConsolidated | null {
   const firstPdc = pdcs[0];
@@ -314,9 +310,10 @@ async function loadParquet() {
   const points: IRVEPointFeature[] = [];
 
   for (const stationPdcs of stations) {
-    const station = consolidateStation(stationPdcs);
-    // const _station = station?.pdcs.filter(pdc => pdc.puissance_nominale >= 50 )
-    if (!station || !shouldDisplayStation(station)) {
+    // Temporairement, la carte ne doit afficher que les stations AFIR DC >= 50 kW.
+    const station = consolidateStation(stationPdcs.filter(pdc => pdc.puissance_nominale >= 50));
+    // const station = consolidateStation(stationPdcs);
+    if (!station) {
       continue;
     }
 

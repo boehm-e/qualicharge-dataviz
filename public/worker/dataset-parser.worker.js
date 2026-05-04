@@ -7785,9 +7785,6 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
       }
     };
   }
-  function shouldDisplayStation(station) {
-    return station.summary.max_power >= 50;
-  }
   function consolidateStation(pdcs) {
     const firstPdc = pdcs[0];
     if (!firstPdc) {
@@ -7894,8 +7891,8 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
     const stations = Array.from(stationMap.values());
     const points = [];
     for (const stationPdcs of stations) {
-      const station = consolidateStation(stationPdcs);
-      if (!station || !shouldDisplayStation(station)) {
+      const station = consolidateStation(stationPdcs.filter((pdc) => pdc.puissance_nominale >= 50));
+      if (!station) {
         continue;
       }
       const point = createFeature(station);

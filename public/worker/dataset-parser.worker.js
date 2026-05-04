@@ -7861,9 +7861,9 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
     };
   }
   async function loadParquet() {
-    postWorkerMessage({ type: "loading", message: "Chargement des disponibilités des bornes..." });
+    postWorkerMessage({ type: "loading", message: "Chargement des disponibilités des stations..." });
     const dynamicMap = await loadDynamicRows();
-    postWorkerMessage({ type: "loading", message: "Préparation des informations sur les bornes..." });
+    postWorkerMessage({ type: "loading", message: "Préparation des informations sur les stations..." });
     const file = await asyncBufferFromUrl({ url: STATIC_PARQUET_URL });
     const metadata = await parquetMetadataAsync(file);
     const rowCount = Number(metadata.num_rows);

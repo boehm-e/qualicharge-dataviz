@@ -130,7 +130,6 @@ export default function IRVEMap() {
     return stationIds.size;
   }, [filteredStations]);
 
-  const filteredPointCount = filteredPoints.length;
   const activeHeatmap = useMemo(
     () => (activeHeatmapMode ? getHeatmapDefinition(activeHeatmapMode as HeatmapMode) : null),
     [activeHeatmapMode]
@@ -245,7 +244,6 @@ export default function IRVEMap() {
         isOpen={isFiltersOpen}
         activeCount={activeFilterCount}
         stationCount={uniqueStationCount}
-        pointCount={filteredPointCount}
         operatorOptions={operatorOptions}
         operatorsWithoutTarification={operatorsWithoutTarification}
         mapDisplayMode={mapDisplayMode}

@@ -82,7 +82,7 @@ export function StationEssentialTab({ station, copiedKey, copy }: EssentialTabPr
         desc={
           <div className="irve-sidepanel__dynamic-grid">
             <div>
-              <p className="irve-sidepanel__label">État de la borne</p>
+              <p className="irve-sidepanel__label">État de la station</p>
               <div className="irve-sidepanel__tags irve-sidepanel__tags--compact">
                 <Badge severity={dynamicSummary.enServiceCount > 0 ? "success" : dynamicSummary.pdcsWithDynamicCount > 0 ? "warning" : "new"}>
                   {dynamicSummary.enServiceCount}/{station.pdcs.length} en service

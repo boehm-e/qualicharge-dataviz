@@ -37,7 +37,7 @@ export function useMapClusters(points: IRVEPointFeature[]) {
 
   const index = useMemo(() => {
     const supercluster = new Supercluster<IRVEPointProperties, Record<string, never>>({
-      radius: 100,
+      radius: 40,
       maxZoom: 17,
       minPoints: 1,
     });

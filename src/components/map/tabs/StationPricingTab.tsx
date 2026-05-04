@@ -78,7 +78,7 @@ export function StationPricingTab({ station }: StationDetailsTabProps) {
               <Notice
                 severity="info"
                 title="Tarification non exploitable"
-                description="L’opérateur de cette borne ne nous a pas communiqué le tarif."
+                description="L’opérateur de cette station ne nous a pas communiqué le tarif."
               />
             ) : null}
 

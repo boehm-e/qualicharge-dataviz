@@ -26,7 +26,7 @@ export const MARKER_MODES: MarkerModeDefinition[] = [
     shortLabel: "Vue stations détaillées",
     order: 0,
     kind: "markers",
-    description: "Affiche les bornes individuelles, leurs clusters et le détail station par station.",
+    description: "Affiche les stations individuelles, leurs clusters et le détail.",
   },
   {
     value: "pricing",
@@ -35,7 +35,7 @@ export const MARKER_MODES: MarkerModeDefinition[] = [
     order: 10,
     kind: "markers",
     description:
-      "Affiche les bornes avec leur prix extrait du champ de tarification, quand un tarif exploitable est disponible.",
+      "Affiche les stations avec leur prix extrait du champ de tarification, quand un tarif exploitable est disponible.",
   },
 ];
 

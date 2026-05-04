@@ -271,11 +271,11 @@ function consolidateStation(pdcs: QualichargeEVSEPdc[]): QualichargeEVSEConsolid
 }
 
 async function loadParquet() {
-  postWorkerMessage({ type: "loading", message: "Chargement des disponibilités des bornes..." });
+  postWorkerMessage({ type: "loading", message: "Chargement des disponibilités des stations..." });
 
   const dynamicMap = await loadDynamicRows();
 
-  postWorkerMessage({ type: "loading", message: "Préparation des informations sur les bornes..." });
+  postWorkerMessage({ type: "loading", message: "Préparation des informations sur les stations..." });
 
   const file = await asyncBufferFromUrl({ url: STATIC_PARQUET_URL });
   const metadata = await parquetMetadataAsync(file);
@@ -315,6 +315,7 @@ async function loadParquet() {
 
   for (const stationPdcs of stations) {
     const station = consolidateStation(stationPdcs);
+    // const _station = station?.pdcs.filter(pdc => pdc.puissance_nominale >= 50 )
     if (!station || !shouldDisplayStation(station)) {
       continue;
     }

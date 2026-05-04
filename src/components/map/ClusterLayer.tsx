@@ -57,12 +57,14 @@ function getClusterClassName(count: number) {
 
 function getPointPowerLabel(power: number | null | undefined) {
   if (!power) return "-";
-  return `${power} kW`;
+  return `${power}`;
+  // return `${power} kW`;
 }
 
 function getPointPlugsLabel(available: number, total: number | null | undefined) {
   if (!total) return "-/- PDC";
-  return `${available}/${total} PDC`;
+  return `${available}/${total}`;
+  // return `${available}/${total} PDC`;
 }
 
 interface PowerTone {

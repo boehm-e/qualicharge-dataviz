@@ -39,7 +39,7 @@ export function StationDetailsPanel({ station, isOpen, onClose }: StationDetails
   // const panelTitle = station ? `${station?.nom_amenageur} / ${station.nom_station}` : "Aucune station sélectionnée";
   const panelSubtitle = station
     ? station.adresse_station
-    : "Cliquez sur une fiche depuis la carte pour afficher les détails complets dela borne.";
+    : "Cliquez sur une fiche depuis la carte pour afficher les détails complets dela station.";
   const panoramaHref = panoramaPicture
     ? `https://api.panoramax.xyz/?focus=pic/${panoramaPicture.lat}/${panoramaPicture.lon}&pic=${panoramaPicture.id}`
     : null;

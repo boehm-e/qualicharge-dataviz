@@ -26,7 +26,6 @@ interface MapFiltersPanelProps {
   isOpen: boolean;
   activeCount: number;
   stationCount: number;
-  pointCount: number;
   operatorOptions: Array<{ value: string; label: string }>;
   operatorsWithoutTarification: string[];
   mapDisplayMode: MapDisplayMode;
@@ -133,7 +132,6 @@ export function MapFiltersPanel({
   isOpen,
   activeCount,
   stationCount,
-  pointCount,
   operatorOptions,
   operatorsWithoutTarification,
   mapDisplayMode,
@@ -157,7 +155,7 @@ export function MapFiltersPanel({
       onClose={onClose}
       eyebrow="Carte de recharge"
       title="Filtres"
-      subtitle="Affinez les bornes visibles sur la carte et dans les clusters."
+      subtitle="Affinez les stations visibles sur la carte et dans les clusters."
     >
       <Card
         title="Résultats visibles"
@@ -168,7 +166,6 @@ export function MapFiltersPanel({
           <div className="irve-filters-panel__summary">
             <div className="irve-filters-panel__summary-copy">
               <strong>{stationCount} stations</strong>
-              <span>{pointCount} points de charge apres filtrage</span>
             </div>
 
             <div className="irve-filters-panel__summary-badges">

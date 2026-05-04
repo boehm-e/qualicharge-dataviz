@@ -366,7 +366,7 @@ body {
 
 .irve-point-card {
   position: relative;
-  min-width: 60px;
+  min-width: 40px;
   width: fit-content;
   display: flex;
   flex-direction: column;

@@ -21,6 +21,7 @@ type DynamicCsvRow = Partial<Record<keyof QualichargeEVSEDynamic | "id_station_i
 const STATIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/8bb0a6e2-1016-42ba-aaee-f72f55c82e9f.parquet";
 const DYNAMIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/411443b1-6667-473f-8217-1c57c167408f.parquet";
 const ROW_BATCH_SIZE = 20_000;
+const cacheOptions: RequestInit = { cache: "no-store" };
 
 let total = 0;
 let nextId = 1;
@@ -143,7 +144,7 @@ function getStationKey(idStationItinerance?: string, fallback?: string) {
 }
 
 async function loadDynamicRows() {
-  const file = await asyncBufferFromUrl({ url: DYNAMIC_PARQUET_URL });
+  const file = await asyncBufferFromUrl({ url: DYNAMIC_PARQUET_URL, requestInit: cacheOptions });
   const rows = (await parquetReadObjects({
     file,
     compressors,
@@ -273,7 +274,7 @@ async function loadParquet() {
 
   postWorkerMessage({ type: "loading", message: "Préparation des informations sur les stations..." });
 
-  const file = await asyncBufferFromUrl({ url: STATIC_PARQUET_URL });
+  const file = await asyncBufferFromUrl({ url: STATIC_PARQUET_URL, requestInit: cacheOptions });
   const metadata = await parquetMetadataAsync(file);
   const rowCount = Number(metadata.num_rows);
   const stationMap = new Map<string, QualichargeEVSEPdc[]>();

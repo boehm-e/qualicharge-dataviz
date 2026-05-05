@@ -150,7 +150,7 @@ export default function IRVEMap() {
 
   return (
     <div className="irve-map-wrapper">
-      <div className="irve-map-toolbar-shell absolute top-3 right-3 left-3 z-[10000] flex justify-end sm:left-auto">
+      <div className="irve-map-toolbar-shell absolute top-3 right-3 left-3 z-500 flex justify-end sm:left-auto">
         <div className="irve-map-toolbar-panel">
           <SegmentedControl
             className="irve-map-toolbar__segmented"

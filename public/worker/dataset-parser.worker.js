@@ -7643,6 +7643,7 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
   var STATIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/8bb0a6e2-1016-42ba-aaee-f72f55c82e9f.parquet";
   var DYNAMIC_PARQUET_URL = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/411443b1-6667-473f-8217-1c57c167408f.parquet";
   var ROW_BATCH_SIZE = 2e4;
+  var cacheOptions = { cache: "no-store" };
   var total = 0;
   var nextId = 1;
   function postWorkerMessage(message) {
@@ -7749,7 +7750,7 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
     return toRequiredString(idStationItinerance) || toRequiredString(fallback);
   }
   async function loadDynamicRows() {
-    const file = await asyncBufferFromUrl({ url: DYNAMIC_PARQUET_URL });
+    const file = await asyncBufferFromUrl({ url: DYNAMIC_PARQUET_URL, requestInit: cacheOptions });
     const rows = await parquetReadObjects({
       file,
       compressors
@@ -7861,7 +7862,7 @@ vmbCnCfH5TJKTBFva0O4Wl+l/Ix13xO6KCJPD5H51fete+aO/R8EyzZRoN8BAA==`;
     postWorkerMessage({ type: "loading", message: "Chargement des disponibilités des stations..." });
     const dynamicMap = await loadDynamicRows();
     postWorkerMessage({ type: "loading", message: "Préparation des informations sur les stations..." });
-    const file = await asyncBufferFromUrl({ url: STATIC_PARQUET_URL });
+    const file = await asyncBufferFromUrl({ url: STATIC_PARQUET_URL, requestInit: cacheOptions });
     const metadata = await parquetMetadataAsync(file);
     const rowCount = Number(metadata.num_rows);
     const stationMap = /* @__PURE__ */ new Map();
